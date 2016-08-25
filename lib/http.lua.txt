@@ -1,0 +1,43 @@
+--@include nabtech/lib/quota.lua.txt
+require( "nabtech/lib/quota.lua.txt" )
+
+local oldhttp = http
+if ( not oldhttp.oldhttp ) then
+    http = {
+        oldhttp = oldhttp
+    }
+end
+
+local httpQueue = {}
+
+local function httpHook ()
+	for k, v in pairs( httpQueue ) do
+        if quotaSafe() and oldhttp.canRequest() then
+            local type, url, params, success, fail = v.type, v.url, v.params, v.success, v.fail
+
+            if type == "get" then
+                oldhttp.get( url, success, fail )
+            elseif v.type == "post" then
+                oldhttp.post( url, params, success, fail )
+            end
+
+            httpQueue[ k ] = nil
+        else
+            break
+        end
+    end
+
+    if #httpQueue == 0 then
+		hook.remove( "think", "http_queue" )
+	end
+end
+
+function http.get ( url, callback, callback_fail )
+	table.insert( httpQueue, { type = "get", url = url, success = callback, fail = callback_fail } )
+    hook.add( "think", "http_queue", httpHook )
+end
+
+function http.post ( url, params, callback, callback_fail )
+    table.insert( httpQueue, { type = "post", url = url, params = params, success = callback, fail = callback_fail } )
+    hook.add( "think", "http_queue", httpHook )
+end

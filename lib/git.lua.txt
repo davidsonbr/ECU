@@ -1,0 +1,115 @@
+--@include nabtech/lib/http.lua.txt
+--@include nabtech/lib/type.lua.txt
+
+require( "nabtech/lib/http.lua.txt" )
+require( "nabtech/lib/type.lua.txt" )
+
+if SERVER then return end
+
+git = {}
+
+local repo = { owner = "", repo = "", branch = "master" }
+
+local root = ""
+
+function git.init ( url, rt )
+	checkType( url, "string" )
+	checkType( rt, "string" )
+
+	repo.owner, repo.repo = url:match( "https://github.com/([^/]+)/([^.git]+)" )
+	root = rt
+
+	if not file.exists( root ) then
+		file.createDir( root )
+	end
+end
+
+local SHA
+
+function git.setVersion ( version )
+	checkType( version, "string" )
+
+	SHA = version
+end
+
+function git.getVersion ()
+	return SHA
+end
+
+local function parseGitAPI ( data )
+	data = json.decode( data )
+
+	if data.message and data.message:find( "API rate limit" ) then
+		http.get( "https://api.github.com/rate_limit", function ( data )
+			local mins = ( json.decode( data ).resources.core.reset - os.time() ) / 60
+			print( "The rate limit for github requests has been exceeded, wait about " .. math.ceil( mins ) .. " minutes before retrying.\n( Sorry, no fix ATM )" )
+			error( "" )
+		end )
+
+		return nil
+	else
+		return data
+	end
+end
+
+function git.pull ()
+	if repo.owner ~= "" and repo.repo ~= "" and repo.branch ~= "" then
+		if not file.exists( root .. "/git/git.json.txt" ) then
+			file.createDir(  root .. "/git" )
+			file.write( root .. "/git/git.json.txt", json.encode( { sha = "" } ) )
+		end
+
+		local conf = json.decode( file.read( root .. "/git/git.json.txt" ) )
+		if not SHA then SHA = conf.sha end
+
+		http.get( "https://api.github.com/repos/".. repo.owner .."/".. repo.repo .."/branches/" .. repo.branch, function ( data )
+			data = parseGitAPI( data )
+
+			if data and data.commit then
+				if SHA ~= data.commit.sha then
+					print( "Updating" )
+					SHA = data.commit.sha
+
+					local queued = 1
+					local function handleFiles ( data )
+						local decoded = parseGitAPI( data )
+						if decoded then
+							for i = 1, #decoded do
+								local v = decoded[ i ]
+								if v.type == "dir" then
+									queued = queued + 1
+									file.createDir( root .. "/" .. v.path )
+									http.get( "get_dir " .. v.path, v.url, handleFiles )
+								elseif not string.find( v.path, ".gitignore" ) then
+									queued = queued + 1
+									http.get( "dl_file " .. v.path, v.download_url, function ( data )
+										file.write( root .. "/" .. v.path, data )
+										queued = queued - 1
+										if queued == 0 then
+											print( "DONE" )
+										end
+									end )
+								end
+							end
+							queued = queued - 1
+						end
+					end
+
+					http.get( "https://api.github.com/repos/" .. repo.owner .. "/".. repo.repo .. "/contents/", function ( data )
+						handleFiles( data )
+
+						file.createDir( root .. "/git" )
+						file.write( root .. "/git/git.json.txt", json.encode( { SHA = SHA } ) )
+
+						print( "Update successful! Re-spawn the chip for the changes to take effect! \n( This is supposed to produce an error )" )
+						error( "" )
+					end )
+				else
+					print( "Up-To-Date!" )
+				end
+		    end
+		end )
+	else
+		error( "No git repository defined, use git.setRepoURL to set the url" )
+	end
+end

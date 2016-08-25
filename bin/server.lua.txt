@@ -1,0 +1,34 @@
+if CLIENT then return end
+
+require( "nabtech/lib/search.lua.txt")
+
+print( "SERVER" )
+
+function NAB.core.preInit ()
+    find.add( Vector( -20.626, 0.031, -2.703 ), "models/cheeze/wires/mini_cpu.mdl", "gmod_wire_value", chip(), function( ent )
+        if ent:wirelink() then
+            NAB.UID = ent:wirelink()[ "1" ]
+            print( "Found UID chip: " .. NAB.UID )
+
+            hook.run( "[sv:nab_hook] core.preinit" )
+            NAB.core.init()
+        else
+            print( "Failed to find UID chip" )
+        end
+    end )
+end
+
+function NAB.core.init ()
+
+    include( "nabtech/bin/sv/chat.lua.txt")
+
+    hook.run( "[sv:nab_hook] core.init" )
+    NAB.core.postInit()
+end
+
+function NAB.core.postInit ()
+
+    hook.run( "[sv:nab_hook] core.postinit" )
+end
+
+NAB.core.preInit()

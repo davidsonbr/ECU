@@ -1,0 +1,54 @@
+--@include nabtech/lib/net.lua.txt
+
+if not net.receive then
+	require( "nabtech/lib/net.lua.txt" )
+end
+
+local included = {}
+
+if CLIENT then
+	function include ( fileName )
+        if not included[ fileName ] then
+            if file.exists( fileName ) then
+                included[ fileName ] = file.read( fileName )
+            else
+                error( "Unable to include \"" .. fileName .. "\"" )
+            end
+        end
+
+        local ret
+        if included[ fileName ] then
+            try( function ()
+                local ret = loadstring( included[ fileName ] )()
+            end, function ( err )
+                throw( err, 3, true )
+            end )
+        end
+        return ret
+	end
+
+	local function loadFileForNet ( name, data, ply )
+		local fileName = data.file
+		if fileName ~= "" and file.exists( fileName ) then
+			net.send( "sv_include upload_file", { code = file.read( fileName ) } )
+		else
+			net.send( "sv_include upload_file", { code = "error( \"Unable to include \\\"" .. fileName .. "\\\"\" )" } )
+		end
+	end
+
+	net.receive( "cl_include load_file", loadFileForNet )
+else
+	function include ( fileName, ply )
+		if included[ fileName ] then
+            loadstring( included[ fileName ] )
+		end
+        net.send( "cl_include load_file", { file = fileName }, ply or owner() )
+
+        local function includeNetData ( name, data, ply )
+            included[ fileName ] = data.code
+            loadstring( included[ fileName ] )()
+        end
+
+        net.receive( "sv_include upload_file", includeNetData )
+    end
+end

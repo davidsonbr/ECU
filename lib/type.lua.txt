@@ -1,0 +1,8 @@
+--- Checks a given value against an expected type
+-- @param value The value to be checked
+-- @param expected The expected type of the value
+function checkType ( value, expected )
+	if type( value ):lower() ~= expected:lower() then
+	    error( "Type mismatch (Expected " .. expected .. ", got " .. type( value ) .. ")" )
+	end
+end

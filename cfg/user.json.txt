@@ -1,0 +1,6 @@
+{
+  "update": false,
+  "debug": 1,
+  "debug_scope": "sh",
+  "debug_verbosity": 0
+}

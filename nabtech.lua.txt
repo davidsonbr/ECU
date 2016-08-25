@@ -1,0 +1,67 @@
+--@name Nabtech Elite
+--@author wetnab
+--@model models/sprops/rectangles_thin/size_2/rect_12x12x1_5.mdl
+
+--@license LICENSE.txt
+--@readme README.txt
+
+--@shared
+
+--@includedir nabtech/lib
+
+require( "nabtech/lib/net.lua.txt" )
+require( "nabtech/lib/include.lua.txt" )
+
+--TODO: The LOCALE in a net message is what is SENDING the message
+--TODO: The LOCALE in a hook is what is RUNNING the hook
+
+NAB = {
+    root = "nabtech/",
+    bin = "nabtech/bin/",
+    cfg = "nabtech/cfg/",
+    lib = "nabtech/lib/",
+    core = {
+        initialized = false
+    }
+}
+if CLIENT then
+	local function ready ( ply )
+		if NAB.core.initialized or ply ~= player() then
+			return
+		end
+
+		NAB.core.initialized = true
+
+		net.receive( "[sv:nab_net] init", function ( name, data )
+			net.remove( "[sv:nab_net] init" )
+			hook.remove( "starfallused", "[cl:nab_hook] init" )
+
+			include( NAB.bin .. "client.lua.txt" )
+		end )
+
+		net.send( "[cl:nab_net] init" )
+	end
+
+	hook.add( "starfallUsed", "[cl:nab_hook] init", ready )
+
+	if player() == owner() then
+	    ready( owner() )
+	end
+elseif SERVER then
+    local function ready ()
+		net.receive( "[cl:nab_net] init", function( name, data, ply )
+			if ply == owner() then
+				NAB.core.initialized = true
+
+				include( NAB.bin .. "server.lua.txt" )
+			end
+
+			hook.add( "[sv:nab_hook] core.postinit", "init cl", function()
+			    net.send( "[sv:nab_net] init", ply )
+			end )
+		end )
+	end
+
+	ready()
+end
+

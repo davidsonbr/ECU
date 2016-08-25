@@ -1,0 +1,45 @@
+if SERVER then return end
+
+print( "CLIENT" )
+
+function NAB.core.preInit ()
+
+    hook.run( "[sv:nab_hook] core.preinit" )
+    NAB.core.init()
+end
+
+function NAB.core.init ()
+
+    hook.run( "[sv:nab_hook] core.init" )
+    NAB.core.postInit()
+end
+
+function NAB.core.postInit ()
+
+    hook.run( "[sv:nab_hook] core.postinit" )
+end
+
+if player() == owner() then
+	NAB.core.__preInit = NAB.core.preInit
+	function NAB.core.preInit ()
+
+
+		NAB.core.__preInit()
+	end
+
+	NAB.core.__init = NAB.core.init
+	function NAB.core.init ()
+
+
+		NAB.core.__init()
+	end
+
+	NAB.core.__postInit = NAB.core.postInit
+	function NAB.core.postInit ()
+
+
+		NAB.core.__postInit()
+	end
+end
+
+NAB.core.preInit()

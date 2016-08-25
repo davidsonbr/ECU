@@ -1,0 +1,65 @@
+--@include nabtech/lib/quota.lua.txt
+require( "nabtech/lib/quota.lua.txt" )
+
+local searches = {}
+
+--- Searches for an entity based on the queries in the searches table
+local function search ()
+	for k, v in pairs( searches ) do
+		if quotaSafe() then
+			local result = find.inSphere( v.parent:localToWorld( v.pos ), 0.5 )
+			if v.list then
+				searches[ k ] = nil
+				if v.callback then
+					v.callback( result )
+				end
+				return
+			end
+
+			local found = false
+			for _, ent in pairs( result ) do
+				if ent:getClass() == v.class and ( ( v.model and ent:getModel() == v.model ) or ( v.model == nil ) ) then
+					found = true
+					if v.callback then
+						v.callback( ent )
+					end
+					break
+				end
+			end
+			if not found then
+				if v.failed then
+					v.failed()
+				end
+			end
+			searches[ k ] = nil
+		else
+			break
+		end
+    end
+
+    if #searches == 0 then
+	    hook.remove( "think", "search" )
+    end
+end
+
+--- Adds a search to the searches table
+-- @param relativePos The position of the query relative to the parent enty
+-- @param model The target model of the entity
+-- @param class The target class of the entity
+-- @param parent The entity that the search should be relative to
+-- @param callback The function to call once the entity is found
+-- @param failed The function to call if no entities were found
+function find.add ( relativePos, model, class, parent, callback, failed )
+	table.insert( searches, { pos = relativePos, model = model, class = class, parent = parent, callback = callback, failed = failed, list = false } )
+	hook.add( "think", "search", search )
+end
+
+
+--- Adds a search to the searches table that will return a table of found entities
+-- @param relativePos The position of the query relative to the parent enty
+-- @param parent The entity that the search should be relative to
+-- @param callback The function to call once the entity is found
+function find.addList ( relativePos, parent, callback )
+	table.insert( searches, { pos = relativePos, parent = parent, callback = callback, list = true } )
+	hook.add( "think", "search", search )
+end
