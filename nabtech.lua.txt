@@ -20,6 +20,7 @@ NAB = {
     root = "nabtech/",
     bin = "nabtech/bin/",
     cfg = "nabtech/cfg/",
+    data = "nabtech/data/",
     lib = "nabtech/lib/",
     core = {
         initialized = false
