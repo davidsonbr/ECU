@@ -7,13 +7,11 @@
 
 --@shared
 
---@include nabtech/lib/quota.lua.txt  
---@include nabtech/lib/net.lua.txt
---@include nabtech/lib/include.lua.txt
+--@include nabtech/lib/core
 
-require( "nabtech/lib/quota.lua.txt" )
-require( "nabtech/lib/net.lua.txt" )
-require( "nabtech/lib/include.lua.txt" )
+require( "nabtech/lib/core/quota.lua.txt" )
+require( "nabtech/lib/core/net.lua.txt" )
+require( "nabtech/lib/core/include.lua.txt" )
 
 --TODO: The LOCALE in a net message is what is SENDING the message
 --TODO: The LOCALE in a hook is what is RUNNING the hook

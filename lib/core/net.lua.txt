@@ -1,5 +1,9 @@
---@include nabtech/lib/quota.lua.txt
+--@name 
+--@author 
+--@shared 
+--@include nabtech/lib/core/quota.lua.txt
 require( "nabtech/lib/core/quota.lua.txt" )
+
 
 local oldnet = net
 if ( not oldnet.oldnet ) then

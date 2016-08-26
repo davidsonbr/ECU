@@ -15,7 +15,7 @@ function NAB.core.preInit ()
 end
 
 function NAB.core.init ()
-    include( "nabtech/bin/sv/chat.lua.txt", function()
+    include( NAB.bin .. "sv/chat.lua.txt", function()
         hook.run( "[sv:nab_hook] core.init" )
         NAB.core.postInit()
     end )
@@ -25,4 +25,4 @@ function NAB.core.postInit ()
     hook.run( "[sv:nab_hook] core.postinit" )
 end
 
-include( "nabtech/lib/search.lua.txt", NAB.core.preInit )
+include( NAB.lib .. "search.lua.txt", NAB.core.preInit )

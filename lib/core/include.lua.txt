@@ -1,7 +1,7 @@
---@include nabtech/lib/net.lua.txt
+--@include nabtech/lib/core/net.lua.txt
 
 if not net.receive then
-	require( "nabtech/lib/net.lua.txt" )
+	require( "nabtech/lib/core/net.lua.txt" )
 end
 
 local included = {}

@@ -1,4 +1,4 @@
-include( "nabtech/lib/core/quota.lua.txt" )
+require( "nabtech/lib/core/quota.lua.txt" )
 
 local searches = {}
 
