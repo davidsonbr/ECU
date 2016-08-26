@@ -1,43 +1,65 @@
 if SERVER then return end
 
-function NAB.core.preInit ()
+print( "CLIENT" )
 
-    hook.run( "[sv:nab_hook] core.preinit" )
-    NAB.core.init()
-end
-
-function NAB.core.init ()
-
-    hook.run( "[sv:nab_hook] core.init" )
-    NAB.core.postInit()
-end
-
-function NAB.core.postInit ()
-
-    hook.run( "[sv:nab_hook] core.postinit" )
+local function doIncludes( incs, callback )
+    local included = 0
+    if #incs == 0 then
+        callback()
+    else
+        local function recursiveInclude()
+            include( incs[ included + 1 ], function()
+                included = included + 1
+                if included == #incs then
+                    callback()
+                else
+                    recursiveInclude()
+                end
+            end )
+        end
+        recursiveInclude()
+    end
 end
 
 if player() == owner() then
-	NAB.core.__preInit = NAB.core.preInit
-	function NAB.core.preInit ()
+    function NAB.core.preInit ( name, data )
+        local includes = {
 
+        }
 
-		NAB.core.__preInit()
-	end
+        NAB.UID = data.UID
 
-	NAB.core.__init = NAB.core.init
-	function NAB.core.init ()
+        doIncludes( includes, function()
+            NAB.core.init()
+        end )
+    end
 
+    function NAB.core.init ()
+        local includes = {
 
-		NAB.core.__init()
-	end
+        }
 
-	NAB.core.__postInit = NAB.core.postInit
-	function NAB.core.postInit ()
+        doIncludes( includes, function ()
+            net.receive( "[sv:nab_net] core.init", function ( name, data )
+                net.remove( "[sv:nab_net] core.init" )
 
+                net.send( "[cl:nab_net] core.init", nil )
+                NAB.core.postInit()
+            end )
 
-		NAB.core.__postInit()
-	end
+            net.send( "[cl:nab_net] core.init", nil )
+        end )
+    end
+
+    function NAB.core.postInit ()
+        local includes = {
+
+        }
+
+        doIncludes( includes, function ()
+
+        end )
+    end
 end
 
-NAB.core.preInit()
+net.receive( "[sv:nab_net] core.preInit", NAB.core.preInit )

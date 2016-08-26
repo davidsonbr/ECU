@@ -1,28 +1,79 @@
 if CLIENT then return end
 
-function NAB.core.preInit ()
-    find.add( Vector( -20.626, 0.031, -2.703 ), "models/cheeze/wires/mini_cpu.mdl", "gmod_wire_value", chip(), function( ent )
-        if ent:wirelink() then
-            NAB.UID = ent:wirelink()[ "1" ]
-            print( "Found UID chip: " .. NAB.UID )
+print( "SERVER" )
 
-            hook.run( "[sv:nab_hook] core.preinit" )
-            NAB.core.init()
+local function doIncludes( incs, callback )
+    local included = 0
+    if #incs == 0 then
+        callback()
+    else
+        local function recursiveInclude()
+            include( incs[ included + 1 ], function()
+                included = included + 1
+                if included == #incs then
+                    callback()
+                else
+                    recursiveInclude()
+                end
+            end )
+        end
+        recursiveInclude()
+    end
+end
+
+function NAB.core.preInit ( ply )
+    local includes = {
+        NAB.lib .. "search.lua.txt",
+    }
+
+    doIncludes( includes, function()
+        if not NAB.UID then
+            find.add( Vector( -20.626, 0.031, -2.703 ), "models/cheeze/wires/mini_cpu.mdl", "gmod_wire_value", chip(), function( ent )
+                if ent:wirelink() then
+                    NAB.UID = ent:wirelink()[ "1" ]
+                    print( "Found UID chip: " .. NAB.UID )
+
+                    NAB.core.init( ply )
+                else
+                    print( "Failed to find UID chip" )
+                end
+            end )
         else
-            print( "Failed to find UID chip" )
+            NAB.core.init( ply )
         end
     end )
 end
 
-function NAB.core.init ()
-    include( NAB.bin .. "sv/chat.lua.txt", function()
-        hook.run( "[sv:nab_hook] core.init" )
-        NAB.core.postInit()
+function NAB.core.init ( ply )
+    local includes = {
+        NAB.bin .. "sv/chat.lua.txt",
+        NAB.bin .. "sv/provider.lua.txt",
+        NAB.bin .. "sv/entity.lua.txt",
+    }
+
+    doIncludes( includes, function ()
+        net.send( "[sv:nab_net] core.preInit", { NAB.UID }, ply )
+        --WAIT FOR CLIENT TO BE READY
+
+        net.receive( "[cl:nab_net] core.init", function ( name, data, ply )
+            net.remove( "[cl:nab_net] core.init" )
+
+            net.send( "[sv:nab_net] core.init", nil, ply )
+            NAB.core.postInit( ply )
+        end )
+
+        net.send( "[sv:nab_net] core.init", nil, ply )
     end )
 end
 
-function NAB.core.postInit ()
-    hook.run( "[sv:nab_hook] core.postinit" )
+function NAB.core.postInit ( ply )
+    local includes = {
+
+    }
+
+    doIncludes( includes, function ()
+        --LOAD ENTITIES AND PROVIDERS
+    end )
 end
 
-include( NAB.lib .. "search.lua.txt", NAB.core.preInit )
+

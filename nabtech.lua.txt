@@ -7,9 +7,9 @@
 
 --@shared
 
---@include nabtech/lib/core
+--@include nabtech/lib/core/net.lua.txt
+--@include nabtech/lib/core/include.lua.txt
 
-require( "nabtech/lib/core/quota.lua.txt" )
 require( "nabtech/lib/core/net.lua.txt" )
 require( "nabtech/lib/core/include.lua.txt" )
 
@@ -25,22 +25,20 @@ NAB = {
         initialized = false
     }
 }
+
 if CLIENT then
 	local function ready ( ply )
+        if ply ~= owner() then return end --OWNER ONLY FOR NOW
+
 		if NAB.core.initialized or ply ~= player() then
 			return
 		end
 
 		NAB.core.initialized = true
 
-		net.receive( "[sv:nab_net] init", function ( name, data )
-			net.remove( "[sv:nab_net] init" )
-			hook.remove( "starfallused", "[cl:nab_hook] init" )
-
-			include( NAB.bin .. "client.lua.txt" )
-		end )
-
-		net.send( "[cl:nab_net] init" )
+        include( NAB.bin .. "client.lua.txt", function()
+            net.send( "[cl:nab_net] init" )
+        end )
 	end
 
 	hook.add( "starfallUsed", "[cl:nab_hook] init", ready )
@@ -54,12 +52,13 @@ elseif SERVER then
 			if ply == owner() then
 				NAB.core.initialized = true
 
-				include( NAB.bin .. "server.lua.txt" )
-			end
-
-			hook.add( "[sv:nab_hook] core.postinit", "init cl", function()
-			    net.send( "[sv:nab_net] init", ply )
-			end )
+                include( NAB.bin .. "server.lua.txt", function()
+                    NAB.core.preInit( ply )
+                end )
+            else
+                --WAIT FOR INITIALIZED W/ OWNER THEN INIT OTHER CLIENTS
+                --net.send( "[sv:nab_net] core.preInit", { NAB.UID }, ply )
+            end
 		end )
 	end
 

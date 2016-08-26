@@ -1,0 +1,18 @@
+NAB.Provider = {}
+NAB.Provider.base = class:extend()
+
+function NAB.Provider.base:__tostring()
+    return "ECU Provider"
+end
+
+function NAB.Provider.base:new( name )
+    self.name = name
+end
+
+function NAB.Provider.base:init( ent )
+    self.ent = ent
+end
+
+function NAB.Provider.base:deinit()
+    self.ent = nil
+end

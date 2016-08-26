@@ -1,0 +1,51 @@
+NAB.Entity = class:extend()
+
+function NAB.Entity:__tostring()
+    return "ECU Entity"
+end
+
+function NAB.Entity:new( name, ent, parent )
+    self.name = name
+    self.ent = ent
+
+    self.parent = parent
+    self.providers = {}
+    self.children = {}
+end
+
+function NAB.Entity:toSaveTable()
+    local tab = {}
+    tab.pos = self.ent:getPos() - self.parent.ent:getPos()
+    tab.model = self.ent:getModel()
+    tab.class = self.ent:getClass()
+
+    tab.providers = {}
+    for k, v in pairs( self.providers ) do
+        tab.providers[ k ] = v:toSaveTable()
+    end
+
+    tab.children = {}
+    for k, v in pairs( self.children ) do
+        tab.children[ k ] = v:toSaveTable()
+    end
+
+    return tab
+end
+
+function NAB.Entity:toJSON()
+    return json.encode( self:toSaveTable() )
+end
+
+function NAB.Entity:addProvider( provider )
+    self.providers[ provider.name ] = provider
+    self.providers[ provider.name ]:init( self.ent )
+end
+
+function NAB.Entity:removeProvider( name )
+    local provider = self.providers[ name ]
+    if provider then
+        provider:deinit()
+
+        self.providers[ name ] = nil
+    end
+end
