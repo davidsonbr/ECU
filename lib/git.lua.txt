@@ -1,8 +1,8 @@
 --@include nabtech/lib/http.lua.txt
 --@include nabtech/lib/type.lua.txt
 
-require( "nabtech/lib/http.lua.txt" )
-require( "nabtech/lib/type.lua.txt" )
+include( "nabtech/lib/http.lua.txt" )
+include( "nabtech/lib/type.lua.txt" )
 
 if SERVER then return end
 

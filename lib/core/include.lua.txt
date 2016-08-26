@@ -7,7 +7,7 @@ end
 local included = {}
 
 if CLIENT then
-	function include ( fileName )
+	function include ( fileName, callback )
         if not included[ fileName ] then
             if file.exists( fileName ) then
                 included[ fileName ] = file.read( fileName )
@@ -20,6 +20,9 @@ if CLIENT then
         if included[ fileName ] then
             try( function ()
                 local ret = loadstring( included[ fileName ] )()
+                if callback then
+                    callback( fileName )
+                end
             end, function ( err )
                 throw( err, 3, true )
             end )
@@ -29,24 +32,36 @@ if CLIENT then
 
 	local function loadFileForNet ( name, data, ply )
 		local fileName = data.file
+        local code
 		if fileName ~= "" and file.exists( fileName ) then
-			net.send( "sv_include upload_file", { code = file.read( fileName ) } )
+			 code = file.read( fileName )
 		else
-			net.send( "sv_include upload_file", { code = "error( \"Unable to include \\\"" .. fileName .. "\\\"\" )" } )
-		end
+			code = "error( \"Unable to include \\\"" .. fileName .. "\\\"\" )"
+        end
+
+        net.send( "sv_include upload_file", { code = code } )
 	end
 
 	net.receive( "cl_include load_file", loadFileForNet )
 else
-	function include ( fileName, ply )
+	function include ( fileName, callback )
 		if included[ fileName ] then
-            loadstring( included[ fileName ] )
-		end
-        net.send( "cl_include load_file", { file = fileName }, ply or owner() )
+            included[ fileName ]()
+            if callback then
+                callback( fileName )
+            end
+            return
+        end
+        net.send( "cl_include load_file", { file = fileName }, owner() )
 
         local function includeNetData ( name, data, ply )
-            included[ fileName ] = data.code
-            loadstring( included[ fileName ] )()
+            net.remove( "sv_include upload_file" )
+            included[ fileName ] = loadstring( data.code )
+            included[ fileName ]()
+
+            if callback then
+                callback( fileName )
+            end
         end
 
         net.receive( "sv_include upload_file", includeNetData )

@@ -1,5 +1,5 @@
 --@include nabtech/lib/quota.lua.txt
-require( "nabtech/lib/quota.lua.txt" )
+require( "nabtech/lib/core/quota.lua.txt" )
 
 local oldnet = net
 if ( not oldnet.oldnet ) then
@@ -10,23 +10,10 @@ end
 
 net.getBytesLeft = oldnet.getBytesLeft
 
-function net.register( ... )
-    local args = { ... }
-    for _, name in pairs( args ) do
-        registered.id[ name ] = #registered.name + 1;
-        registered.name[ registered.id[ name ] ] = name;
-    end
-end
-
 local netQueue = {}
 
 local function netHook()
-    local instance = SF.instance
-
     for k, v in pairs( netQueue ) do
-        burst_tick()
-
-        instance.data.net.burst = instance.data.net.burst - instance.data.net.size
         if quotaSafe() and ( v.data and #v.data or 0 ) + 6 <= net.getBytesLeft() - 500 --[[ 6 is the number of bytes taken by the UInts, 500 is a safe zone ]] then
             oldnet.start( "net" )
             oldnet.writeUInt( #v.id, 32 )

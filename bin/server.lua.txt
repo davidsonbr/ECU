@@ -1,9 +1,5 @@
 if CLIENT then return end
 
-require( "nabtech/lib/search.lua.txt")
-
-print( "SERVER" )
-
 function NAB.core.preInit ()
     find.add( Vector( -20.626, 0.031, -2.703 ), "models/cheeze/wires/mini_cpu.mdl", "gmod_wire_value", chip(), function( ent )
         if ent:wirelink() then
@@ -19,16 +15,14 @@ function NAB.core.preInit ()
 end
 
 function NAB.core.init ()
-
-    include( "nabtech/bin/sv/chat.lua.txt")
-
-    hook.run( "[sv:nab_hook] core.init" )
-    NAB.core.postInit()
+    include( "nabtech/bin/sv/chat.lua.txt", function()
+        hook.run( "[sv:nab_hook] core.init" )
+        NAB.core.postInit()
+    end )
 end
 
 function NAB.core.postInit ()
-
     hook.run( "[sv:nab_hook] core.postinit" )
 end
 
-NAB.core.preInit()
+include( "nabtech/lib/search.lua.txt", NAB.core.preInit )

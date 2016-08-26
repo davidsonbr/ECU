@@ -7,8 +7,11 @@
 
 --@shared
 
---@includedir nabtech/lib
+--@include nabtech/lib/quota.lua.txt  
+--@include nabtech/lib/net.lua.txt
+--@include nabtech/lib/include.lua.txt
 
+require( "nabtech/lib/quota.lua.txt" )
 require( "nabtech/lib/net.lua.txt" )
 require( "nabtech/lib/include.lua.txt" )
 
