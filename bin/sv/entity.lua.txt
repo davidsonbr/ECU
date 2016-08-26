@@ -1,27 +1,34 @@
 NAB.Entity = class:extend()
 
+NAB.Entity.entities = {}
+
 function NAB.Entity:__tostring()
-    return "ECU Entity"
+    return ( self.parent and self.parent:__tostring() .. "." or "" ) .. self.name
 end
 
 function NAB.Entity:new( name, ent, parent )
     self.name = name
     self.ent = ent
 
-    self.parent = parent
+    self.parent = parent or false
     self.providers = {}
     self.children = {}
+
+    self.entities[ self:__tostring() ] = self
 end
 
 function NAB.Entity:toSaveTable()
     local tab = {}
-    tab.pos = self.ent:getPos() - self.parent.ent:getPos()
-    tab.model = self.ent:getModel()
-    tab.class = self.ent:getClass()
+
+    if self.parent then
+        tab.pos = self.ent:getPos() - self.parent.ent:getPos()
+        tab.model = self.ent:getModel()
+        tab.class = self.ent:getClass()
+    end
 
     tab.providers = {}
     for k, v in pairs( self.providers ) do
-        tab.providers[ k ] = v:toSaveTable()
+        tab.providers[ v.name ] = v:toSaveTable()
     end
 
     tab.children = {}
