@@ -57,7 +57,10 @@ if player() == owner() then
         }
 
         doIncludes( includes, function ()
-
+            if file.exists( NAB.data .. "vehicles/" .. NAB.UID .. ".json.txt" ) then
+                NAB.vehicle = json.decode( file.read( NAB.data .. "vehicles/" .. NAB.UID .. ".json.txt" ) )
+                net.send( "[cl:nab_net] core.vehiclejson", NAB.vehicle )
+            end
         end )
     end
 end

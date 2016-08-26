@@ -52,7 +52,7 @@ function NAB.core.init ( ply )
     }
 
     doIncludes( includes, function ()
-        net.send( "[sv:nab_net] core.preInit", { NAB.UID }, ply )
+        net.send( "[sv:nab_net] core.preInit", { UID = NAB.UID }, ply )
         --WAIT FOR CLIENT TO BE READY
 
         net.receive( "[cl:nab_net] core.init", function ( name, data, ply )
@@ -72,7 +72,29 @@ function NAB.core.postInit ( ply )
     }
 
     doIncludes( includes, function ()
+        local chipEnt = NAB.Entity( "chip", chip(), nil )
+
+        net.receive( "[cl:nab_net] core.vehiclejson", function( name, data, ply )
+            NAB.vehicle = data
+
+            local function createFromTable( entData, parent )
+                for k, v in pairs( entData ) do
+                    find.add( Vector( v.pos[ 1 ], v.pos[ 2 ], v.pos[ 3 ] ), v.model, v.class, parent.ent, function( ent )
+                        local newEnt = NAB.Entity( k, ent, parent )
+                        print( "Created " .. newEnt:__tostring() )
+                        --Create providers
+
+                        --Create child entities
+                        createFromTable( v.children, newEnt )
+                    end )
+                end
+            end
+
+            createFromTable( NAB.vehicle, chipEnt )
+        end )
+
         --LOAD ENTITIES AND PROVIDERS
+
     end )
 end
 
