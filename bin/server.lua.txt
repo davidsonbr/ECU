@@ -83,6 +83,16 @@ function NAB.core.postInit ( ply )
                         local newEnt = NAB.Entity( k, ent, parent )
                         print( "Created " .. newEnt:__tostring() )
                         --Create providers
+                        for _k, _v in pairs( v.providers ) do
+                            local providerClass = NAB.Provider[ _v.type ]
+                            if providerClass then
+                                local provider = NAB.Provider[ _v.type ]( _k, _v )
+                                print( "\tAdded '" .. provider.type .. "' provider" )
+                                newEnt:addProvider( provider )
+                            else
+                                print( "\tFailed to add '" .. _v.type .. "' provider" )
+                            end
+                        end
 
                         --Create child entities
                         createFromTable( v.children, newEnt )
