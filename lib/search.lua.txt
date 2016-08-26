@@ -1,11 +1,9 @@
-require( "nabtech/lib/core/quota.lua.txt" )
-
 local searches = {}
 
 --- Searches for an entity based on the queries in the searches table
 local function search ()
 	for k, v in pairs( searches ) do
-		if quotaSafe() then
+		if quotaSafe( 90 ) then
 			local result = find.inSphere( v.parent:localToWorld( v.pos ), 0.5 )
 			if v.list then
 				searches[ k ] = nil
