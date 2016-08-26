@@ -7,7 +7,7 @@ end
 
 NAB.Provider.base.type = "base"
 
-function NAB.Provider.base:new( name )
+function NAB.Provider.base:new( name, data )
     self.name = name
 end
 
