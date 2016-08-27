@@ -136,6 +136,45 @@ if player() == owner() then
                     end )
                 end
             end )
+
+            net.receive( "[sv:nab_net] core.cfg", function( name, data, ply )
+                local ent = NAB.Entity.entities[ data.ent ]
+                local provider = ent.providers[ data.provider ]
+                if not provider then
+                    print( "Provider " .. provider .. " does not exist" )
+                    return
+                end
+
+                local var, nextVar = data.var:match( "^([^%.]+)[%.(.+)]*" )
+                local tab = provider
+
+                while nextVar do
+                    tab = tab[ var ]
+                    var, nextVar = nextVar:match( "^([^%.]+)[%.(.+)]*" )
+                end
+
+                if data.type ~= nil and data.value ~= nil then
+                    local conversion = {
+                        [ "number" ] = function( val )
+                            return tonumber( val )
+                        end,
+                        [ "boolean" ] = function( val )
+                            return val == "true"
+                        end,
+                        [ "string" ] = function( val )
+                            return val
+                        end
+                    }
+
+                    if conversion[ data.type ] then
+                        tab[ var ] = conversion[ data.type ]( data.value )
+                        print( data.var, tab[ var ] )
+                    else
+                        print( "Unknown type " .. data.type )
+                    end
+                end
+                print( data.var .. " = " .. tab[ var ] )
+            end )
         end )
     end
 end
