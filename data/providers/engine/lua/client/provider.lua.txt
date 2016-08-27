@@ -20,7 +20,7 @@ end
 
 local function accel( self )
     self.accel = not self.accel
-    net.send( "[cl:nab_provider][steering] accelerate." .. self.ent:entIndex(), { accel = self.accel } )
+    net.send( "[cl:nab_provider][engine] accelerate." .. self.ent:entIndex(), { accel = self.accel } )
 end
 
 P.hook = {

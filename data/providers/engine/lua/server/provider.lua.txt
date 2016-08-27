@@ -21,7 +21,7 @@ function P:toSaveTable()
 end
 
 function P:init( ent )
-    net.receive( "[cl:nab_provider][steering] accelerate." .. ent:entIndex(), function( name, data, ply )
+    net.receive( "[cl:nab_provider][engine] accelerate." .. ent:entIndex(), function( name, data, ply )
         local driverseat = NAB.Entity.entities[ self.driverseat ]
         if driverseat and driverseat.ent:getDriver() == owner() then
             self.accel = data.accel
@@ -32,7 +32,7 @@ function P:init( ent )
 end
 
 function P:deinit()
-    net.remove( "[cl:nab_provider][steering] accelerate." .. self.ent:entIndex() )
+    net.remove( "[cl:nab_provider][engine] accelerate." .. self.ent:entIndex() )
 
     P.super.deinit( self )
 end
