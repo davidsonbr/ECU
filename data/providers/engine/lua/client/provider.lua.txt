@@ -26,12 +26,6 @@ function P:toSaveTable()
     return tab
 end
 
-function P:init( ent )
-    self.turn = 0
-
-    P.super.init( self, ent )
-end
-
 local function accel( self )
     self.accel = not self.accel
     net.send( "[cl:nab_provider][steering] accelerate." .. self.ent:entIndex(), { accel = self.accel } )
