@@ -95,7 +95,7 @@ if player() == owner() then
                 local providerData = data.data
 
                 local ent = NAB.Entity.entities[ entName ]
-                local provider = NAB.Provider[ providerData.type ]( providerName, providerData.cl )
+                local provider = NAB.Provider[ providerData.type ]( providerName, providerData.cl or {} )
                 ent:addProvider( provider )
             end )
 
@@ -106,7 +106,7 @@ if player() == owner() then
                 local function moveTable( client, server )
                     for k, v in pairs( client ) do
                         for _k, _v in pairs( v.providers or {} ) do
-                            server[ k ].providers[ _k ].cl = _v.cl
+                            server[ k ].providers[ _k ].cl = _v.cl or {}
                             tmp[ server[ k ].providers[ _k ].type ] = true
                         end
                         moveTable( v.children, server[ k ].children )
