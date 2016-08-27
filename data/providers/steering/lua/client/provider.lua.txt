@@ -16,10 +16,8 @@ end
 
 function P:toSaveTable()
     local tab = {
-        cl = {
-            chassis = self.chassis,
-            podcontroller = self.podcontroller
-        }
+        chassis = self.chassis,
+        podcontroller = self.podcontroller
     }
 
     return tab

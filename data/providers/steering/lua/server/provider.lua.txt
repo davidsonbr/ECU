@@ -20,18 +20,15 @@ end
 
 function P:toSaveTable()
     local tab = {
-        type = self.type,
-        sv = {
-            chassis = self.chassis,
-            podcontroller = self.podcontroller,
-            driverseat = self.driverseat,
-            max = self.max,
-            mul = self.mul,
-            increment = self.increment,
-            axis = self.axis,
+        chassis = self.chassis,
+        podcontroller = self.podcontroller,
+        driverseat = self.driverseat,
+        max = self.max,
+        mul = self.mul,
+        increment = self.increment,
+        axis = self.axis,
 
-            offset = self.chassisOffset
-        }
+        offset = self.chassisOffset
     }
 
     return tab

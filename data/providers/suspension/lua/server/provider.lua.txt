@@ -9,11 +9,8 @@ end
 
 function NAB.Provider.base:toSaveTable()
     local tab = {
-        type = self.type,
-        sv = {
-            constant = self.constant,
-            damping = self.damping
-        }
+        constant = self.constant,
+        damping = self.damping
     }
 
     return tab

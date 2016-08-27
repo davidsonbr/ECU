@@ -11,10 +11,7 @@ function P:new( name, data )
 end
 
 function P:toSaveTable()
-    local tab = {
-        type = self.type,
-        sv = {}
-    }
+    local tab = {}
 
     return tab
 end
