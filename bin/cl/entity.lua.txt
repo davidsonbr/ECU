@@ -20,12 +20,6 @@ end
 function NAB.Entity:toSaveTable()
     local tab = {}
 
-    if self.parent then
-        tab.pos = self.ent:getPos() - self.parent.ent:getPos()
-        tab.model = self.ent:getModel()
-        tab.class = self.ent:getClass()
-    end
-
     tab.providers = {}
     for k, v in pairs( self.providers ) do
         tab.providers[ v.name ] = v:toSaveTable()
@@ -37,10 +31,6 @@ function NAB.Entity:toSaveTable()
     end
 
     return tab
-end
-
-function NAB.Entity:toJSON()
-    return json.encode( self:toSaveTable() )
 end
 
 function NAB.Entity:addProvider( provider )
