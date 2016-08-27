@@ -1,7 +1,3 @@
-if net.receive then
-    return
-end
-
 local oldnet = net
 if ( not oldnet.oldnet ) then
     net = {
