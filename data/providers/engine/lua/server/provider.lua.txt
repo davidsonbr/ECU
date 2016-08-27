@@ -11,12 +11,6 @@ function P:new( name, data )
 end
 
 function P:toSaveTable()
-    local tab = {}
-
-    return tab
-end
-
-function P:toSaveTable()
     local tab = {
         cl = {
             chassis = self.chassis,
