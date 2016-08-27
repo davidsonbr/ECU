@@ -10,6 +10,8 @@ function P:new( name, data )
     self.chassis = data.chassis or "chip.Chassis"
     self.podcontroller = data.podcontroller or "chip.Control Panel.Pod Controller"
     self.driverseat = data.driverseat or ( self.chassis .. ".Driver Seat" )
+
+    self.turn = 0
 end
 
 function P:toSaveTable()
@@ -23,10 +25,10 @@ function P:toSaveTable()
     return tab
 end
 
-function P:init( ent )
-    self.turn = 0
+function P:deinit( )
+    net.remove( "[cl:nab_provider][steering] turn." .. self.ent:entIndex() )
 
-    P.super.init( self, ent )
+    P.super.deinit( self )
 end
 
 P.input = {
