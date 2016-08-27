@@ -122,7 +122,7 @@ function NAB.core.postInit ( ply )
                     for _k, _v in pairs( v.providers ) do
                         local providerClass = NAB.Provider[ _v.type ]
                         if providerClass then
-                            local provider = NAB.Provider[ _v.type ]( _k, _v.sv or {} )
+                            local provider = providerClass( _k, _v.sv or {} )
                             newEnt:addProvider( provider )
                             net.send( "[sv:nab_net] core.addprovider", { ent = newEnt:__tostring(), name = _k, data = _v }, ply )
 
@@ -153,6 +153,34 @@ function NAB.core.postInit ( ply )
                     parent.children[ name ] = newEnt
 
                     net.send( "[sv:nab_net] core.addentity", { name = name, ent = ent, parent = parent:__tostring() }, ply )
+                    print( "Created " .. newEnt:__tostring() )
+                end
+            end )
+
+            NAB.Chat.add( "add", "add provider", function( name, provider )
+                if provider == "base" then return end
+                local trace = owner():getEyeTrace()
+                local rawent = trace.Entity
+                local ent
+                if rawent:isValid() then
+                    for k, v in pairs( NAB.Entity.entities ) do
+                        if v.ent:entIndex() == rawent:entIndex() then
+                            ent = v
+                            break
+                        end
+                    end
+                end
+
+                if ent then
+                    local providerClass = NAB.Provider[ provider ]
+                    if providerClass then
+                        local newProvider = providerClass( name, {} )
+                        ent:addProvider( newProvider )
+                        net.send( "[sv:nab_net] core.addprovider", { ent = ent:__tostring(), name = name, data = { type = provider } }, ply )
+                        print( "Added '" .. provider .. "' provider" )
+                    else
+                        print( "Failed to add '" .. provider .. "' provider" )
+                    end
                 end
             end )
         end )
