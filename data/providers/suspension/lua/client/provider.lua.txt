@@ -1,0 +1,7 @@
+local P = NAB.Provider.base:extend()
+
+P.hook = {
+
+}
+
+return P

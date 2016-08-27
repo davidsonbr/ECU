@@ -1,0 +1,18 @@
+local P = NAB.Provider.base:extend()
+
+function P:new( name, data )
+    self.name = name
+
+    self.constant = data.constant or 1
+    self.damping = data.damping or 1
+end
+
+function P:init( ent )
+    self.super.init( self, ent )
+
+    local wl = self.ent:wirelink()
+    wl.Constant = self.constant
+    wl.Damping = self.damping
+end
+
+return P
