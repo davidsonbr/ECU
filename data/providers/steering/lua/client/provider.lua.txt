@@ -1,0 +1,43 @@
+local P = NAB.Provider.base:extend()
+
+P.hook = {
+
+}
+
+function P:new( name, data )
+    self.name = name
+
+    self.podcontroller = data.podcontroller or "chip.Control Panel.Pod Controller"
+    self.driverseat = data.driverseat or ( self.chassis .. ".Driver Seat" )
+end
+
+function P:init( ent )
+    self.turn = 0
+
+    P.super.init( self, ent )
+end
+
+P.input = {
+    pressed = {
+        a = function ( self )
+            self.turn = self.turn - 1
+            net.send( "[cl:nab_provider][steering] turn." .. self.ent:entIndex(), { turn = self.turn } )
+        end,
+        d = function ( self )
+            self.turn = self.turn + 1
+            net.send( "[cl:nab_provider][steering] turn." .. self.ent:entIndex(), { turn = self.turn } )
+        end
+    },
+    released = {
+        a = function ( self )
+            self.turn = self.turn + 1
+            net.send( "[cl:nab_provider][steering] turn." .. self.ent:entIndex(), { turn = self.turn } )
+        end,
+        d = function ( self )
+            self.turn = self.turn - 1
+            net.send( "[cl:nab_provider][steering] turn." .. self.ent:entIndex(), { turn = self.turn } )
+        end
+    }
+}
+
+return P
