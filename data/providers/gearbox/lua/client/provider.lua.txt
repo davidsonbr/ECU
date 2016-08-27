@@ -1,0 +1,42 @@
+local P = NAB.Provider.base:extend()
+
+function P:new( name, data )
+    self.name = name
+
+    self.chassis = data.chassis or "chip.Chassis"
+    self.driverseat = data.driverseat or ( self.chassis .. ".Driver Seat" )
+end
+
+function P:toSaveTable()
+    local tab = {
+        chassis = self.chassis,
+        driverseat = self.driverseat
+    }
+
+    return tab
+end
+
+P.hook = {
+
+}
+
+P.input = {
+    pressed = {
+        MOUSE1 = function( self )
+            net.send( "[cl:nab_provider][gearbox] gear." .. self.ent:entIndex(), { state = "+" } )
+        end,
+        MOUSE2 = function( self )
+            net.send( "[cl:nab_provider][gearbox] gear." .. self.ent:entIndex(), { state = "-" } )
+        end,
+        s = function( self )
+            net.send( "[cl:nab_provider][gearbox] gear." .. self.ent:entIndex(), { state = "r" } )
+        end,
+    },
+    released = {
+        s = function( self )
+            net.send( "[cl:nab_provider][gearbox] gear." .. self.ent:entIndex(), { state = "r" } )
+        end,
+    }
+}
+
+return P
