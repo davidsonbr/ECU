@@ -183,6 +183,19 @@ function NAB.core.postInit ( ply )
                     end
                 end
             end )
+
+            NAB.Chat.add( "loadProvider", "load provider", function( name )
+                if name == "base" then return end
+                net.send( "[sv:nab_net] core.loadprovider", { name = name }, ply )
+
+                net.receive( "[cl:nab_net] core.loadprovider", function( _, data, ply )
+                    net.remove( "[cl:nab_net] core.loadprovider" )
+                    include( NAB.data .. "providers/" .. data.name .. "/lua/server/provider.lua.txt", function( provider )
+                        provider.type = data.name
+                        NAB.Provider[ provider.type ] = provider
+                    end )
+                end )
+            end )
         end )
     end )
 end

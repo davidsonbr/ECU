@@ -67,6 +67,7 @@ if player() == owner() then
 
                 for k, v in pairs( NAB.providers ) do
                     include( NAB.data .. "providers/" .. v .. "/lua/client/provider.lua.txt", function( provider )
+                        provider.type = v
                         NAB.Provider[ v ] = provider
                     end )
                 end
@@ -123,6 +124,17 @@ if player() == owner() then
                 print( "SAVING..." )
                 file.write( NAB.data .. "vehicles/" .. NAB.UID .. "/vehicle.json.txt", json.encode( data.children ) )
                 file.write( NAB.data .. "vehicles/" .. NAB.UID .. "/providers.json.txt", json.encode( providers ) )
+            end )
+
+            net.receive( "[sv:nab_net] core.loadprovider", function( name, data, ply )
+                local providerFile = NAB.data .. "providers/" .. data.name .. "/lua/client/provider.lua.txt"
+                if file.exists( providerFile ) then
+                    include( providerFile, function( provider )
+                        provider.type = data.name
+                        NAB.Provider[ data.name ] = provider
+                        net.send( "[cl:nab_net] core.loadprovider", { name = data.name }, ply )
+                    end )
+                end
             end )
         end )
     end
