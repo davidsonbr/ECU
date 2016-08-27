@@ -9,6 +9,7 @@
 
 --@include nabtech/lib/core/net.lua.txt
 --@include nabtech/lib/core/include.lua.txt
+--@include nabtech/lib/class.lua.txt
 
 require( "nabtech/lib/core/net.lua.txt" )
 require( "nabtech/lib/core/include.lua.txt" )
@@ -26,6 +27,8 @@ NAB = {
         initialized = false
     }
 }
+
+NAB.obj = require( "nabtech/lib/class.lua.txt" )
 
 if CLIENT then
 	local function ready ( ply )

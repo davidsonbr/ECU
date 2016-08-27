@@ -24,7 +24,8 @@ end
 if player() == owner() then
     function NAB.core.preInit ( name, data )
         local includes = {
-
+            NAB.bin .. "cl/provider.lua.txt",
+            NAB.bin .. "cl/entity.lua.txt",
         }
 
         NAB.UID = data.UID
@@ -57,10 +58,45 @@ if player() == owner() then
         }
 
         doIncludes( includes, function ()
-            if file.exists( NAB.data .. "vehicles/" .. NAB.UID .. ".json.txt" ) then
-                NAB.vehicle = json.decode( file.read( NAB.data .. "vehicles/" .. NAB.UID .. ".json.txt" ) )
-                net.send( "[cl:nab_net] core.vehiclejson", NAB.vehicle )
+            local chipEnt = NAB.Entity( "chip", chip(), nil )
+
+            local fileName = NAB.data .. "vehicles/" .. NAB.UID .. "/providers.json.txt"
+            if file.exists( fileName ) then
+                NAB.providers = json.decode( file.read( fileName ) )
+                net.send( "[cl:nab_net] core.providerjson", NAB.providers )
+
+                for k, v in pairs( NAB.providers ) do
+                    include( NAB.data .. "providers/" .. v .. "/lua/client/provider.lua.txt", function( provider )
+                        NAB.Provider[ v ] = provider
+                    end )
+                end
             end
+
+            net.receive( "[sv:nab_net] core.vehiclejson", function( name, data, ply )
+                local fileName = NAB.data .. "vehicles/" .. NAB.UID .. "/vehicle.json.txt"
+                if file.exists( fileName ) then
+                    NAB.vehicle = json.decode( file.read( fileName ) )
+                    net.send( "[cl:nab_net] core.vehiclejson", NAB.vehicle )
+                end
+            end )
+
+            net.receive( "[sv:nab_net] core.addentity", function( name, data, ply )
+                local entName = data.name
+                local ent = data.ent
+                local parent = NAB.Entity.entities[ data.parent ]
+
+                local newEnt = NAB.Entity( entName, ent, parent )
+            end )
+
+            net.receive( "[sv:nab_net] core.addprovider", function( name, data, ply )
+                local entName = data.ent
+                local providerName = data.name
+                local providerData = data.data
+
+                local ent = NAB.Entity.entities[ entName ]
+                local provider = NAB.Provider[ providerData.type ]( providerName, providerData.cl )
+                ent:addProvider( provider )
+            end )
         end )
     end
 end

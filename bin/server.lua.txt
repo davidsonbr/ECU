@@ -74,37 +74,70 @@ function NAB.core.postInit ( ply )
     doIncludes( includes, function ()
         local chipEnt = NAB.Entity( "chip", chip(), nil )
 
+        net.receive( "[cl:nab_net] core.providerjson", function( name, data, ply )
+            NAB.providers = data
+
+            local inc = {}
+            for k, v in pairs( NAB.providers ) do
+                table.insert( inc, v )
+            end
+
+            local included = 0
+            local function callback()
+                net.send( "[sv:nab_net] core.vehiclejson", nil, ply )
+            end
+
+            if #inc == 0 then
+                callback()
+            else
+                local function recursiveInclude()
+                    include( NAB.data .. "providers/" .. inc[ included + 1 ] .. "/lua/server/provider.lua.txt", function( provider )
+                        provider.type = inc[ included + 1 ]
+                        NAB.Provider[ provider.type ] = provider
+                        included = included + 1
+                        if included == #inc then
+                            callback()
+                        else
+                            recursiveInclude()
+                        end
+                    end )
+                end
+                recursiveInclude()
+            end
+        end )
+
         net.receive( "[cl:nab_net] core.vehiclejson", function( name, data, ply )
             NAB.vehicle = data
 
             local function createFromTable( entData, parent )
                 for k, v in pairs( entData ) do
-                    find.add( Vector( v.pos[ 1 ], v.pos[ 2 ], v.pos[ 3 ] ), v.model, v.class, parent.ent, function( ent )
-                        local newEnt = NAB.Entity( k, ent, parent )
-                        print( "Created " .. newEnt:__tostring() )
-                        --Create providers
-                        for _k, _v in pairs( v.providers ) do
-                            local providerClass = NAB.Provider[ _v.type ]
-                            if providerClass then
-                                local provider = NAB.Provider[ _v.type ]( _k, _v )
-                                print( "\tAdded '" .. provider.type .. "' provider" )
-                                newEnt:addProvider( provider )
-                            else
-                                print( "\tFailed to add '" .. _v.type .. "' provider" )
-                            end
-                        end
+                    local ent = find.find( Vector( v.pos[ 1 ], v.pos[ 2 ], v.pos[ 3 ] ), v.model, v.class, parent.ent )
 
-                        --Create child entities
-                        createFromTable( v.children, newEnt )
-                    end )
+                    local newEnt = NAB.Entity( k, ent, parent )
+                    net.send( "[sv:nab_net] core.addentity", { name = k, ent = ent, parent = parent:__tostring() }, ply )
+
+                    print( "Created " .. newEnt:__tostring() )
+                    --Create providers
+                    for _k, _v in pairs( v.providers ) do
+                        local providerClass = NAB.Provider[ _v.type ]
+                        if providerClass then
+                            local provider = NAB.Provider[ _v.type ]( _k, _v.sv or {} )
+                            newEnt:addProvider( provider )
+                            net.send( "[sv:nab_net] core.addprovider", { ent = newEnt:__tostring(), name = _k, data = _v }, ply )
+
+                            --print( "\tAdded '" .. provider.type .. "' provider" )
+                        else
+                            --print( "\tFailed to add '" .. _v.type .. "' provider" )
+                        end
+                    end
+
+                    --Create child entities
+                    createFromTable( v.children, newEnt )
                 end
             end
 
             createFromTable( NAB.vehicle, chipEnt )
         end )
-
-        --LOAD ENTITIES AND PROVIDERS
-
     end )
 end
 

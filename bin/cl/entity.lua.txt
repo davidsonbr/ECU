@@ -55,3 +55,4 @@ function NAB.Entity:removeProvider( name )
         self.providers[ name ] = nil
     end
 end
+
