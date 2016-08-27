@@ -7,8 +7,20 @@ P.hook = {
 function P:new( name, data )
     self.name = name
 
+    self.chassis = data.chassis or "chip.Chassis"
     self.podcontroller = data.podcontroller or "chip.Control Panel.Pod Controller"
     self.driverseat = data.driverseat or ( self.chassis .. ".Driver Seat" )
+end
+
+function P:toSaveTable()
+    local tab = {
+        cl = {
+            chassis = self.chassis,
+            podcontroller = self.podcontroller
+        }
+    }
+
+    return tab
 end
 
 function P:init( ent )

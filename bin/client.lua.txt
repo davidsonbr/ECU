@@ -86,6 +86,7 @@ if player() == owner() then
                 local parent = NAB.Entity.entities[ data.parent ]
 
                 local newEnt = NAB.Entity( entName, ent, parent )
+                parent.children[ entName ] = newEnt
             end )
 
             net.receive( "[sv:nab_net] core.addprovider", function( name, data, ply )
@@ -96,6 +97,32 @@ if player() == owner() then
                 local ent = NAB.Entity.entities[ entName ]
                 local provider = NAB.Provider[ providerData.type ]( providerName, providerData.cl )
                 ent:addProvider( provider )
+            end )
+
+            net.receive( "[sv:nab_net] core.save", function( name, data, ply )
+                local clientData = chipEnt:toSaveTable()
+                local tmp = {}
+
+                local function moveTable( client, server )
+                    for k, v in pairs( client ) do
+                        for _k, _v in pairs( v.providers or {} ) do
+                            server[ k ].providers[ _k ].cl = _v.cl
+                            tmp[ server[ k ].providers[ _k ].type ] = true
+                        end
+                        moveTable( v.children, server[ k ].children )
+                    end
+                end
+
+                moveTable( clientData.children, data.children )
+
+                local providers = {}
+                for k, v in pairs( tmp ) do
+                    table.insert( providers, k )
+                end
+
+                print( "SAVING..." )
+                file.write( NAB.data .. "vehicles/" .. NAB.UID .. "/vehicle.json.txt", json.encode( data.children ) )
+                file.write( NAB.data .. "vehicles/" .. NAB.UID .. "/providers.json.txt", json.encode( providers ) )
             end )
         end )
     end

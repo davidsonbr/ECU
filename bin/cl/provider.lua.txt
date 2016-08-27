@@ -15,11 +15,7 @@ function NAB.Provider.base:new( name, data )
 end
 
 function NAB.Provider.base:toSaveTable()
-    local tab = {
-        type = self.type
-    }
-
-    return tab
+    return {}
 end
 
 function NAB.Provider.base:init( ent )

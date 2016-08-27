@@ -114,6 +114,7 @@ function NAB.core.postInit ( ply )
                     local ent = find.find( Vector( v.pos[ 1 ], v.pos[ 2 ], v.pos[ 3 ] ), v.model, v.class, parent.ent )
 
                     local newEnt = NAB.Entity( k, ent, parent )
+                    parent.children[ k ] = newEnt
                     net.send( "[sv:nab_net] core.addentity", { name = k, ent = ent, parent = parent:__tostring() }, ply )
 
                     print( "Created " .. newEnt:__tostring() )
@@ -137,6 +138,23 @@ function NAB.core.postInit ( ply )
             end
 
             createFromTable( NAB.vehicle, chipEnt )
+
+            NAB.Chat.add( "save", "save files", function()
+                local data = chipEnt:toSaveTable()
+                net.send( "[sv:nab_net] core.save", data )
+            end )
+
+            NAB.Chat.add( "create", "create entity", function( name, parent )
+                local trace = owner():getEyeTrace()
+                local ent = trace.Entity
+                parent = NAB.Entity.entities[ parent ]
+                if ent:isValid() and parent then
+                    local newEnt = NAB.Entity( name, ent, parent )
+                    parent.children[ name ] = newEnt
+
+                    net.send( "[sv:nab_net] core.addentity", { name = name, ent = ent, parent = parent:__tostring() }, ply )
+                end
+            end )
         end )
     end )
 end
