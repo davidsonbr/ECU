@@ -18,10 +18,16 @@ end
 
 function P:init( ent )
     self.super.init( self, ent )
-
-    local wl = self.ent:wirelink()
-    wl.Constant = self.constant
-    wl.Damping = self.damping
 end
+
+P.hook = {
+    think = function( self )
+        if not self.wl then
+            self.wl = self.ent:wirelink()
+        end
+        self.wl.Constant = self.constant
+        self.wl.Damping = self.damping
+    end
+}
 
 return P
