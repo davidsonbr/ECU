@@ -134,6 +134,8 @@ if player() == owner() then
                         NAB.Provider[ data.name ] = provider
                         net.send( "[cl:nab_net] core.loadprovider", { name = data.name }, ply )
                     end )
+                else
+                    print( "No such provider '" .. data.name .. "'" )
                 end
             end )
 
