@@ -67,191 +67,78 @@ end
 
 function NAB.core.postInit ( ply )
     local includes = {
-
+        NAB.bin .. "sv/util.lua.txt",
     }
 
-    doIncludes( includes, function ()
-        local chipEnt = NAB.Entity( "chip", chip(), nil )
+    doIncludes( includes, function () end )
 
-        net.receive( "[cl:nab_net] core.providerjson", function( name, data, ply )
-            NAB.providers = data
+    local chipEnt = NAB.Entity( "chip", chip(), nil )
 
-            local inc = {}
-            for k, v in pairs( NAB.providers ) do
-                table.insert( inc, v )
-            end
+    net.receive( "[cl:nab_net] core.providerjson", function( name, data, ply )
+        NAB.providers = data
 
-            local included = 0
-            local function callback()
-                net.send( "[sv:nab_net] core.vehiclejson", nil, ply )
-            end
+        local inc = {}
+        for k, v in pairs( NAB.providers ) do
+            table.insert( inc, v )
+        end
 
-            if #inc == 0 then
-                callback()
-            else
-                local function recursiveInclude()
-                    include( NAB.data .. "providers/" .. inc[ included + 1 ] .. "/lua/server/provider.lua.txt", function( provider )
-                        provider.type = inc[ included + 1 ]
-                        NAB.Provider[ provider.type ] = provider
-                        included = included + 1
-                        if included == #inc then
-                            callback()
-                        else
-                            recursiveInclude()
-                        end
-                    end )
-                end
-                recursiveInclude()
-            end
-        end )
+        local included = 0
+        local function callback()
+            net.send( "[sv:nab_net] core.vehiclejson", nil, ply )
+        end
 
-        net.receive( "[cl:nab_net] core.vehiclejson", function( name, data, ply )
-            NAB.vehicle = data
-
-            local function createFromTable( entData, parent )
-                for k, v in pairs( entData ) do
-                    local ent = find.find( Vector( v.pos[ 1 ], v.pos[ 2 ], v.pos[ 3 ] ), v.model, v.class, parent.ent )
-
-                    local newEnt = NAB.Entity( k, ent, parent )
-                    parent.children[ k ] = newEnt
-                    net.send( "[sv:nab_net] core.addentity", { name = k, ent = ent, parent = parent:__tostring() }, ply )
-
-                    print( "Created " .. newEnt:__tostring() )
-
-                    --Create Providers
-                    for _k, _v in pairs( v.providers ) do
-                        local providerClass = NAB.Provider[ _v.type ]
-                        if providerClass then
-                            local provider = providerClass( _k, _v.sv or {} )
-                            newEnt:addProvider( provider )
-                            net.send( "[sv:nab_net] core.addprovider", { ent = newEnt:__tostring(), name = _k, data = _v }, ply )
-
-                            --print( "\tAdded '" .. provider.type .. "' provider" )
-                        else
-                            --print( "\tFailed to add '" .. _v.type .. "' provider" )
-                        end
-                    end
-
-                    --Create child entities
-                    createFromTable( v.children, newEnt )
-                end
-            end
-
-            createFromTable( NAB.vehicle, chipEnt )
-
-            NAB.Chat.add( "save", "save files", function()
-                local data = chipEnt:toSaveTable()
-                net.send( "[sv:nab_net] core.save", data )
-            end )
-
-            NAB.Chat.add( "create", "create entity", function( name, parent )
-                local trace = owner():getEyeTrace()
-                local ent = trace.Entity
-                parent = NAB.Entity.entities[ parent ]
-                if ent:isValid() and parent then
-                    local newEnt = NAB.Entity( name, ent, parent )
-                    parent.children[ name ] = newEnt
-
-                    net.send( "[sv:nab_net] core.addentity", { name = name, ent = ent, parent = parent:__tostring() }, ply )
-                    print( "Created " .. newEnt:__tostring() )
-                end
-            end )
-
-            NAB.Chat.add( "add", "add provider", function( name, provider )
-                if provider == "base" then return end
-                local trace = owner():getEyeTrace()
-                local rawent = trace.Entity
-                local ent
-                if rawent:isValid() then
-                    for k, v in pairs( NAB.Entity.entities ) do
-                        if v.ent:entIndex() == rawent:entIndex() then
-                            ent = v
-                            break
-                        end
-                    end
-                end
-
-                if ent then
-                    local providerClass = NAB.Provider[ provider ]
-                    if providerClass then
-                        local newProvider = providerClass( name, {} )
-                        ent:addProvider( newProvider )
-                        net.send( "[sv:nab_net] core.addprovider", { ent = ent:__tostring(), name = name, data = { type = provider } }, ply )
-                        print( "Added '" .. provider .. "' provider" )
+        if #inc == 0 then
+            callback()
+        else
+            local function recursiveInclude()
+                include( NAB.data .. "providers/" .. inc[ included + 1 ] .. "/lua/server/provider.lua.txt", function( provider )
+                    provider.type = inc[ included + 1 ]
+                    NAB.Provider[ provider.type ] = provider
+                    included = included + 1
+                    if included == #inc then
+                        callback()
                     else
-                        print( "Failed to add '" .. provider .. "' provider" )
+                        recursiveInclude()
                     end
-                end
-            end )
-
-            NAB.Chat.add( "loadProvider", "load provider", function( name )
-                if name == "base" then return end
-                net.send( "[sv:nab_net] core.loadprovider", { name = name }, ply )
-
-                net.receive( "[cl:nab_net] core.loadprovider", function( _, data, ply )
-                    net.remove( "[cl:nab_net] core.loadprovider" )
-                    include( NAB.data .. "providers/" .. data.name .. "/lua/server/provider.lua.txt", function( provider )
-                        provider.type = data.name
-                        NAB.Provider[ provider.type ] = provider
-                    end )
                 end )
-            end )
+            end
+            recursiveInclude()
+        end
+    end )
 
-            NAB.Chat.add( "cfg", "set config", function( key, type, value )
-                local provider, locale, var = key:match( "^([^%.]+)%.([^%.]+)%.(.+)" )
+    net.receive( "[cl:nab_net] core.vehiclejson", function( name, data, ply )
+        NAB.vehicle = data
 
-                local trace = owner():getEyeTrace()
-                local rawent = trace.Entity
-                local ent
-                if rawent:isValid() then
-                    for k, v in pairs( NAB.Entity.entities ) do
-                        if v.ent:entIndex() == rawent:entIndex() then
-                            ent = v
-                            break
-                        end
+        local function createFromTable( entData, parent )
+            for k, v in pairs( entData ) do
+                local ent = find.find( Vector( v.pos[ 1 ], v.pos[ 2 ], v.pos[ 3 ] ), v.model, v.class, parent.ent )
+
+                local newEnt = NAB.Entity( k, ent, parent )
+                parent.children[ k ] = newEnt
+                net.send( "[sv:nab_net] core.addentity", { name = k, ent = ent, parent = parent:__tostring() }, ply )
+
+                print( "Created " .. newEnt:__tostring() )
+
+                --Create Providers
+                for _k, _v in pairs( v.providers ) do
+                    local providerClass = NAB.Provider[ _v.type ]
+                    if providerClass then
+                        local provider = providerClass( _k, _v.sv or {} )
+                        newEnt:addProvider( provider )
+                        net.send( "[sv:nab_net] core.addprovider", { ent = newEnt:__tostring(), name = _k, data = _v }, ply )
+
+                        --print( "\tAdded '" .. provider.type .. "' provider" )
+                    else
+                        --print( "\tFailed to add '" .. _v.type .. "' provider" )
                     end
                 end
 
-                if locale == "cl" then
-                    net.send( "[sv:nab_net] core.cfg", { ent = ent:__tostring(), provider = provider, var = var, type = type, value = value }, ply )
-                elseif locale == "sv" then
-                    local provider = ent.providers[ provider ]
-                    if not provider then
-                        print( "Provider " .. provider .. " does not exist" )
-                        return
-                    end
+                --Create child entities
+                createFromTable( v.children, newEnt )
+            end
+        end
 
-                    local _var, nextVar = var:match( "^([^%.]+)[%.(.+)]*" )
-                    local tab = provider
-
-                    while nextVar do
-                        tab = tab[ _var ]
-                        _var, nextVar = nextVar:match( "^([^%.]+)[%.(.+)]*" )
-                    end
-
-                    if type ~= nil and value ~= nil then
-                        local conversion = {
-                            [ "number" ] = function( val )
-                                return tonumber( val )
-                            end,
-                            [ "boolean" ] = function( val )
-                                return val == "true"
-                            end,
-                            [ "string" ] = function( val )
-                                return val
-                            end
-                        }
-
-                        if conversion[ type ] then
-                            tab[ _var ] = conversion[ type ]( value )
-                        else
-                            print( "Unknown type " .. type )
-                        end
-                    end
-                    print( var .. " = " .. tab[ _var ] )
-                end
-            end )
-        end )
+        createFromTable( NAB.vehicle, NAB.Entity.entities[ "chip" ] )
     end )
 end
 
