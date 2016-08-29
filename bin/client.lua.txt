@@ -54,7 +54,7 @@ if player() == owner() then
 
     function NAB.core.postInit ()
         local includes = {
-
+            NAB.bin .. "cl/util.lua.txt",
         }
 
         doIncludes( includes, function ()
@@ -98,84 +98,6 @@ if player() == owner() then
                 local ent = NAB.Entity.entities[ entName ]
                 local provider = NAB.Provider[ providerData.type ]( providerName, providerData.cl or {} )
                 ent:addProvider( provider )
-            end )
-
-            net.receive( "[sv:nab_net] core.save", function( name, data, ply )
-                local clientData = chipEnt:toSaveTable()
-                local tmp = {}
-
-                local function moveTable( client, server )
-                    for k, v in pairs( client ) do
-                        for _k, _v in pairs( v.providers or {} ) do
-                            server[ k ].providers[ _k ].cl = _v.cl or {}
-                            tmp[ server[ k ].providers[ _k ].type ] = true
-                        end
-                        moveTable( v.children, server[ k ].children )
-                    end
-                end
-
-                moveTable( clientData.children, data.children )
-
-                local providers = {}
-                for k, v in pairs( tmp ) do
-                    table.insert( providers, k )
-                end
-
-                print( "SAVING..." )
-                file.write( NAB.data .. "vehicles/" .. NAB.UID .. "/vehicle.json.txt", json.encode( data.children ) )
-                file.write( NAB.data .. "vehicles/" .. NAB.UID .. "/providers.json.txt", json.encode( providers ) )
-            end )
-
-            net.receive( "[sv:nab_net] core.loadprovider", function( name, data, ply )
-                local providerFile = NAB.data .. "providers/" .. data.name .. "/lua/client/provider.lua.txt"
-                if file.exists( providerFile ) then
-                    include( providerFile, function( provider )
-                        provider.type = data.name
-                        NAB.Provider[ data.name ] = provider
-                        net.send( "[cl:nab_net] core.loadprovider", { name = data.name }, ply )
-                    end )
-                else
-                    print( "No such provider '" .. data.name .. "'" )
-                end
-            end )
-
-            net.receive( "[sv:nab_net] core.cfg", function( name, data, ply )
-                local ent = NAB.Entity.entities[ data.ent ]
-                local provider = ent.providers[ data.provider ]
-                if not provider then
-                    print( "Provider " .. provider .. " does not exist" )
-                    return
-                end
-
-                local var, nextVar = data.var:match( "^([^%.]+)[%.(.+)]*" )
-                local tab = provider
-
-                while nextVar do
-                    tab = tab[ var ]
-                    var, nextVar = nextVar:match( "^([^%.]+)[%.(.+)]*" )
-                end
-
-                if data.type ~= nil and data.value ~= nil then
-                    local conversion = {
-                        [ "number" ] = function( val )
-                            return tonumber( val )
-                        end,
-                        [ "boolean" ] = function( val )
-                            return val == "true"
-                        end,
-                        [ "string" ] = function( val )
-                            return val
-                        end
-                    }
-
-                    if conversion[ data.type ] then
-                        tab[ var ] = conversion[ data.type ]( data.value )
-                        print( data.var, tab[ var ] )
-                    else
-                        print( "Unknown type " .. data.type )
-                    end
-                end
-                print( data.var .. " = " .. tab[ var ] )
             end )
         end )
     end
