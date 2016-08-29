@@ -20,29 +20,23 @@ function P:toSaveTable()
     return tab
 end
 
-function P:init( ent )
-    net.receive( "[cl:nab_provider][transfercase] reverse." .. ent:entIndex(), function( name, data, ply )
-        local driverseat = NAB.Entity.entities[ self.driverseat ]
-        if driverseat and driverseat.ent:getDriver() == owner() then
-            if data.state then
-                self.ent:acfShift( 2 )
-            else
-                self.ent:acfShift( 1 )
-            end
-        end
-    end )
-
-    P.super.init( self, ent )
-end
-
-function P:deinit()
-    net.remove( "[cl:nab_provider][transfercase] reverse." .. self.ent:entIndex() )
-
-    P.super.deinit( self )
-end
-
 P.hook = {
+    think = function( self )
+        local controller = NAB.Entity.entities[ self.podcontroller ]
+        local driverseat = NAB.Entity.entities[ self.driverseat ]
 
+        if not controller and not driverseat then return end
+
+        local driver = driverseat.ent:getDriver()
+        if not driver:isValid() then return end
+
+        controller = controller.ent:wirelink()
+        if controller.W == 1 and controller.S == 0 then
+            self.ent:acfShift( 1 )
+        elseif controller.W == 0 and controller.S == 1 then
+            self.ent:acfShift( 2 )
+        end
+    end
 }
 
 return P

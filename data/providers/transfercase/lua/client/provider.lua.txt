@@ -1,34 +1,3 @@
 local P = NAB.Provider.base:extend()
 
-function P:new( name, data )
-    self.name = name
-
-    self.chassis = data.chassis or "chip.Chassis"
-    self.driverseat = data.driverseat or ( self.chassis .. ".Driver Seat" )
-end
-
-function P:toSaveTable()
-    local tab = {
-        chassis = self.chassis,
-        driverseat = self.driverseat
-    }
-
-    return tab
-end
-
-P.hook = {
-
-}
-
-P.input = {
-    pressed = {
-        s = function( self )
-            net.send( "[cl:nab_provider][transfercase] reverse." .. self.ent:entIndex(), { state = true } )
-        end,
-        w = function( self )
-            net.send( "[cl:nab_provider][transfercase] reverse." .. self.ent:entIndex(), { state = false } )
-        end,
-    }
-}
-
 return P

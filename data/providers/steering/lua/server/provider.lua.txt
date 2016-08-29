@@ -16,6 +16,7 @@ function P:new( name, data )
 
     self.turn = 0
     self.percent = 0
+    self.offset = 0
 end
 
 function P:toSaveTable()
@@ -55,16 +56,14 @@ P.hook = {
         if driverseat then
             local driver = driverseat.ent:getDriver()
             if driver:isValid() then
-                if driver ~= owner() then
-                    if controller then
-                        controller = controller.ent:wirelink()
-                        if controller.A == 1 and controller.D == 0 then
-                            self.turn = -1
-                        elseif controller.A == 0 and controller.D == 1 then
-                            self.turn = 1
-                        else
-                            self.turn = 0
-                        end
+                if controller then
+                    controller = controller.ent:wirelink()
+                    if controller.A == 1 and controller.D == 0 then
+                        self.turn = -1
+                    elseif controller.A == 0 and controller.D == 1 then
+                        self.turn = 1
+                    else
+                        self.turn = 0
                     end
                 end
             end
