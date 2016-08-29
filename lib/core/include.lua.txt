@@ -31,7 +31,7 @@ if CLIENT then
 			code = "error( \"Unable to include \\\"" .. fileName .. "\\\"\" )"
         end
 
-        net.send( "sv_include upload_file", { code = code } )
+        net.send( "sv_include " .. fileName, { code = code } )
 	end
 
 	net.receive( "cl_include load_file", loadFileForNet )
@@ -48,7 +48,7 @@ else
         net.send( "cl_include load_file", { file = fileName }, owner() )
 
         local function includeNetData ( name, data, ply )
-            net.remove( "sv_include upload_file" )
+            net.remove( "sv_include " .. fileName )
             included[ fileName ] = loadstring( data.code )
 
             if callback then
@@ -58,6 +58,6 @@ else
             end
         end
 
-        net.receive( "sv_include upload_file", includeNetData )
+        net.receive( "sv_include " .. fileName, includeNetData )
     end
 end
