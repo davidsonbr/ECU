@@ -57,20 +57,11 @@ NAB.Chat.add( "loadProvider", "load provider", function( name )
     end )
 end )
 
-NAB.Chat.add( "cfg", "set config", function( key, type, value )
+NAB.Chat.add( "cfg", "set config", function( ent, key, type, value )
     local provider, locale, var = key:match( "^([^%.]+)%.([^%.]+)%.(.+)" )
 
     local trace = owner():getEyeTrace()
-    local rawent = trace.Entity
-    local ent
-    if rawent:isValid() then
-        for k, v in pairs( NAB.Entity.entities ) do
-            if v.ent:entIndex() == rawent:entIndex() then
-                ent = v
-                break
-            end
-        end
-    end
+    ent = NAB.Entity.entities[ ent ]
 
     if not ent then
         print( "Unknown entity" )
@@ -109,7 +100,6 @@ NAB.Chat.add( "cfg", "set config", function( key, type, value )
 
             if conversion[ type ] then
                 tab[ _var ] = conversion[ type ]( value )
-                provider:update()
             else
                 print( "Unknown type " .. type )
             end
