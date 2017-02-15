@@ -1,0 +1,74 @@
+local P = NAB.Provider.base:extend()
+
+function P:new( name, data )
+    self.name = name
+
+    self.chassis = data.chassis or "chip.Chassis"
+    self.podcontroller = data.podcontroller or "chip.Control Panel.Pod Controller"
+    self.driverseat = data.driverseat or ( self.chassis .. ".Driver Seat" )
+
+    self.idle = data.idle or 0
+    self.accel = false
+end
+
+function P:toSaveTable()
+    local tab = {
+        chassis = self.chassis,
+        podcontroller = self.podcontroller,
+        driverseat = self.driverseat,
+        idle = self.idle
+    }
+
+    return tab
+end
+
+function P:init( ent )
+    net.receive( "[cl:nab_provider][engine] accelerate." .. ent:entIndex(), function( name, data, ply )
+        local driverseat = NAB.Entity.entities[ self.driverseat ]
+        if driverseat and driverseat.ent:getDriver() == owner() then
+            self.accel = data.accel
+        end
+    end )
+
+    P.super.init( self, ent )
+end
+
+function P:deinit()
+    net.remove( "[cl:nab_provider][engine] accelerate." .. self.ent:entIndex() )
+
+    P.super.deinit( self )
+end
+
+P.hook = {
+    [ "think" ] = function( self )
+        local controller = NAB.Entity.entities[ self.podcontroller ]
+        local driverseat = NAB.Entity.entities[ self.driverseat ]
+        if not controller or not driverseat then return end
+            local driver = driverseat.ent:getDriver()
+            if not driver:isValid() then
+                self.ent:acfSetActive( false )
+                return
+            end
+            self.ent:acfSetActive( true )
+
+            if not self.wl then
+                self.wl = controller.ent:wirelink()
+            end
+
+            if self.wl.W == 1 and self.wl.S == 0 then
+                self.accel = true
+            elseif self.wl.W == 0 and self.wl.S == 1 then
+                self.accel = true
+            else
+                self.accel = false
+            end
+
+            if self.accel then
+                self.ent:acfSetThrottle( self.accel and 100 or self.idle)
+            else
+                self.ent:acfSetThrottle( self.idle )
+            end
+    end
+}
+
+return P

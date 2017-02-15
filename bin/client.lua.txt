@@ -1,6 +1,74 @@
 ---
 -- @author wetnab
 
-net.sync( "preInit", nil, function()
-	print( "cl:preinit" )
-end )
+if SERVER then return end
+
+function NAB.preInit( _, data )
+	local libs = {
+		"oop"
+	}
+	
+	local includes = {
+		NAB.bin .. "cl/entity.lua.txt",
+		NAB.bin .. "cl/provider.lua.txt",
+		NAB.bin .. "cl/util.lua.txt",
+	}
+	
+	NAB.UID = data.UID
+	
+	loadlib( libs, function()
+		include( includes, function()
+			net.sync( "[sh:nn] init", NAB.init )
+		end )
+	end )
+end
+
+function NAB.init()
+	local includes = {}
+	
+	include( includes, function()
+		local chipEnt = NAB.Entity( "chip", chip(), nil )
+		
+		local fileName = NAB.data .. "vehicles/" .. NAB.UID .. "/providers.json.txt"
+		if file.exists( fileName ) then
+			NAB.providers = json.decode( file.read( fileName ) )
+			net.send( "[cl:nn] providerjson", NAB.providers )
+			
+			for k, v in pairs( NAB.providers ) do
+				include( NAB.data .. "providers/" .. v .. "/lua/client/provider.lua.txt", function( provider )
+					provider.type = v
+					NAB.Provider[ v ] = provider
+				end )
+			end
+		end
+		
+		net.receive( "[sv:nn] vehiclejson", function( name, data, ply )
+			local fileName = NAB.data .. "vehicles/" .. NAB.UID .. "/vehicle.json.txt"
+			if file.exists( fileName ) then
+				NAB.vehicle = json.decode( file.read( fileName ) )
+				net.send( "[cl:nn] vehiclejson", NAB.vehicle )
+			end
+		end )
+		
+		net.receive( "[sv:nn] addentity", function( name, data, ply )
+			local entName = data.name
+			local ent = data.ent
+			local parent = NAB.Entity.entities[ data.parent ]
+						
+			local newEnt = NAB.Entity( entName, ent, parent )
+			parent.children[ entName ] = newEnt
+		end )
+		
+		net.receive( "[sv:nn] addprovider", function( name, data, ply )
+			local entName = data.ent
+			local providerName = data.name
+			local providerData = data.data
+			
+			local ent = NAB.Entity.entities[ entName ]
+			local provider = NAB.Provider[ providerData.type ]( providerName, providerData.cl or {} )
+			ent:addProvider( provider )
+		end )
+	end )
+end
+
+net.receive( "[sv:nn] preinit", NAB.preInit )

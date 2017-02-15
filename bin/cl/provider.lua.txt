@@ -1,0 +1,57 @@
+NAB.Provider = {}
+NAB.Provider.base = Object:extend()
+
+function NAB.Provider.base:__tostring()
+    return "ECU Provider: " .. self.type
+end
+
+NAB.Provider.base.type = "base"
+
+NAB.Provider.base.hook = {}
+NAB.Provider.base.input = {}
+
+function NAB.Provider.base:new( name, data )
+    self.name = name
+end
+
+function NAB.Provider.base:toSaveTable()
+    return {}
+end
+
+function NAB.Provider.base:init( ent )
+    self.ent = ent
+
+    for k, v in pairs( self.hook or {} ) do
+        hook.add( k, "[nab_hook]" .. self.type .. self.name .. self.ent:entIndex(), function( ... )
+            v( self, unpack( { ... } ) )
+        end )
+    end
+
+    if self.input then
+        if self.input.pressed then
+            hook.add( "inputPressed", "[nab_input]" .. self.type .. self.name .. self.ent:entIndex(), function( id )
+                local key = input.getKeyName( id )
+                local func = self.input.pressed[ key ]
+                if func then
+                    func( self )
+                end
+            end )
+        end
+        if self.input.released then
+            hook.add( "inputReleased", "[nab_input]" .. self.type .. self.name .. self.ent:entIndex(), function( id )
+                local key = input.getKeyName( id )
+                local func = self.input.released[ key ]
+                if func then
+                    func( self )
+                end
+            end )
+        end
+    end
+end
+
+function NAB.Provider.base:deinit()
+    self.ent = nil
+    for k, v in pairs( self.hook ) do
+        hook.remove( k, "[nab_hook]" .. self.type .. self.name )
+    end
+end

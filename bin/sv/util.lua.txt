@@ -1,0 +1,109 @@
+NAB.Chat.add( "save", "save files", function()
+    local data = NAB.Entity.entities[ "chip" ]:toSaveTable()
+    net.send( "[sv:nn] save", data, owner() )
+end )
+
+NAB.Chat.add( "create", "create entity", function( name, parent )
+    local trace = owner():getEyeTrace()
+    local ent = trace.Entity
+    parent = NAB.Entity.entities[ parent ]
+    if ent:isValid() and parent then
+        local newEnt = NAB.Entity( name, ent, parent )
+        parent.children[ name ] = newEnt
+
+        net.send( "[sv:nn] addentity", { name = name, ent = ent, parent = parent:__tostring() }, owner() )
+        print( "Created " .. newEnt:__tostring() )
+    end
+end )
+
+NAB.Chat.add( "add", "add provider", function( name, provider )
+    if provider == "base" then return end
+    local trace = owner():getEyeTrace()
+    local rawent = trace.Entity
+    local ent
+    if rawent:isValid() then
+        for k, v in pairs( NAB.Entity.entities ) do
+            if v.ent:entIndex() == rawent:entIndex() then
+                ent = v
+                break
+            end
+        end
+    end
+
+    if ent then
+        local providerClass = NAB.Provider[ provider ]
+        if providerClass then
+            local newProvider = providerClass( name, {} )
+            ent:addProvider( newProvider )
+            net.send( "[sv:nn] addprovider", { ent = ent:__tostring(), name = name, data = { type = provider } }, owner() )
+            print( "Added '" .. provider .. "' provider" )
+        else
+            print( "Failed to add '" .. provider .. "' provider" )
+        end
+    end
+end )
+
+NAB.Chat.add( "loadProvider", "load provider", function( name )
+    if name == "base" then return end
+    net.send( "[sv:nn] loadprovider", { name = name }, owner() )
+
+    net.receive( "[cl:nn] loadprovider", function( _, data, ply )
+        net.remove( "[cl:nn] loadprovider" )
+        include( NAB.data .. "providers/" .. data.name .. "/lua/server/provider.lua.txt", function( provider )
+            provider.type = data.name
+            NAB.Provider[ provider.type ] = provider
+            print( "Loaded provider '" .. provider.type .. "'" )
+        end )
+    end )
+end )
+
+NAB.Chat.add( "cfg", "set config", function( ent, key, type, value )
+    local provider, locale, var = key:match( "^([^%.]+)%.([^%.]+)%.(.+)" )
+
+    local trace = owner():getEyeTrace()
+    ent = NAB.Entity.entities[ ent ]
+
+    if not ent then
+        print( "Unknown entity" )
+        return
+    end
+
+    if locale == "cl" then
+        net.send( "[sv:nn] cfg", { ent = ent:__tostring(), provider = provider, var = var, type = type, value = value }, owner() )
+    elseif locale == "sv" then
+        local provider = ent.providers[ provider ]
+        if not provider then
+            print( "Provider " .. provider .. " does not exist" )
+            return
+        end
+
+        local _var, nextVar = var:match( "^([^%.]+)[%.(.+)]*" )
+        local tab = provider
+
+        while nextVar do
+            tab = tab[ _var ]
+            _var, nextVar = nextVar:match( "^([^%.]+)[%.(.+)]*" )
+        end
+
+        if type ~= nil and value ~= nil then
+            local conversion = {
+                [ "number" ] = function( val )
+                    return tonumber( val )
+                end,
+                [ "boolean" ] = function( val )
+                    return val == "true"
+                end,
+                [ "string" ] = function( val )
+                    return val
+                end
+            }
+
+            if conversion[ type ] then
+                tab[ _var ] = conversion[ type ]( value )
+            else
+                print( "Unknown type " .. type )
+            end
+        end
+        print( var .. " = " .. tostring( tab[ _var ] ) )
+    end
+end )

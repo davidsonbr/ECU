@@ -1,0 +1,95 @@
+local P = NAB.Provider.base:extend()
+
+function P:new( name, data )
+    self.name = name
+
+    self.chassis = data.chassis or "chip.Chassis"
+    self.podcontroller = data.podcontroller or "chip.Control Panel.Pod Controller"
+    self.driverseat = data.driverseat or ( self.chassis .. ".Driver Seat" )
+
+    self.max = data.max or 30
+    self.mul = data.mul or 1
+    self.increment = data.increment or 1
+    self.axis = data.axis or "y"
+
+    self.chassisOffset = Angle( 0, 0, 0 ) or data.offset and Angle( data.offset[ 1 ], data.offset[ 2 ], data.offset[ 3 ] )
+
+    self.turn = 0
+    self.percent = 0
+    self.offset = 0
+end
+
+function P:toSaveTable()
+    local tab = {
+        chassis = self.chassis,
+        podcontroller = self.podcontroller,
+        driverseat = self.driverseat,
+        max = self.max,
+        mul = self.mul,
+        increment = self.increment,
+        axis = self.axis,
+
+        offset = self.chassisOffset
+    }
+
+    return tab
+end
+
+function P:init( ent )
+    net.receive( "[cl:nab_provider][steering] turn." .. ent:entIndex(), function( name, data, ply )
+        local driverseat = NAB.Entity.entities[ self.driverseat ]
+        if driverseat and driverseat.ent:getDriver() == owner() then
+            self.turn = data.turn
+        end
+    end )
+
+    P.super.init( self, ent )
+end
+
+P.hook = {
+    [ "think" ] = function( self )
+        self.ent:setFrozen( true )
+
+        local chassis = NAB.Entity.entities[ self.chassis ]
+        local controller = NAB.Entity.entities[ self.podcontroller ]
+        local driverseat = NAB.Entity.entities[ self.driverseat ]
+        if driverseat then
+            local driver = driverseat.ent:getDriver()
+            if driver:isValid() then
+                if controller then
+                    controller = controller.ent:wirelink()
+                    if controller.A == 1 and controller.D == 0 then
+                        self.turn = -1
+                    elseif controller.A == 0 and controller.D == 1 then
+                        self.turn = 1
+                    else
+                        self.turn = 0
+                    end
+                end
+            end
+        end
+
+        if self.turn ~= 0 then
+            local increment = self.turn * self.increment
+
+            self.percent = math.clamp( self.percent + increment, -100, 100 )
+            self.offset = lerp( math.abs( self.percent ) / 100, 0, self.max * self.mul * ( self.percent / math.abs( self.percent ~= 0 and self.percent or 1 ) ) )
+        elseif self.percent ~= 0 then
+            local increment = self.increment * ( self.percent / -math.abs( self.percent ) )
+
+            self.percent = math.clamp( self.percent + increment, -100, 100 )
+            self.offset = lerp( math.abs( self.percent ) / 100, 0, self.max * self.mul * ( self.percent / math.abs( self.percent ~= 0 and self.percent or 1 ) ) )
+        else
+            self.offset = 0
+        end
+
+        local offsetAng = Angle( 0, 0, 0 )
+        offsetAng[ self.axis ] = self.offset or 0
+
+        self.targetAng = chassis.ent:localToWorldAngles( self.chassisOffset + offsetAng )
+
+        self.ent:setAngles( self.targetAng )
+    end
+}
+
+return P

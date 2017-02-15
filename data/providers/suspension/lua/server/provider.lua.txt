@@ -1,0 +1,33 @@
+local P = NAB.Provider.base:extend()
+
+function P:new( name, data )
+    self.name = name
+
+    self.constant = data.constant or 1
+    self.damping = data.damping or 1
+end
+
+function NAB.Provider.base:toSaveTable()
+    local tab = {
+        constant = self.constant,
+        damping = self.damping
+    }
+
+    return tab
+end
+
+function P:init( ent )
+    self.super.init( self, ent )
+end
+
+P.hook = {
+    think = function( self )
+        if not self.wl then
+            self.wl = self.ent:wirelink()
+        end
+        self.wl.Constant = self.constant
+        self.wl.Damping = self.damping
+    end
+}
+
+return P

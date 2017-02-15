@@ -1,6 +1,98 @@
 ---
 -- @author wetnab
 
-net.sync( "preInit", nil, function()
-	print( "sv:preinit" )
-end )
+if CLIENT then return end
+
+function NAB.preInit()
+	local libs = {
+		"oop",
+		"search",
+	}
+	
+	local includes = {
+		NAB.bin .. "sv/entity.lua.txt",
+		NAB.bin .. "sv/provider.lua.txt",
+		NAB.bin .. "sv/chat.lua.txt",
+		NAB.bin .. "sv/util.lua.txt",
+	}
+
+	loadlib( libs, function()
+		include( includes, function()
+			if not NAB.UID then
+				local ent = find.find( Vector( -20.626, 0.031, -2.703 ), "models/cheeze/wires/mini_cpu.mdl", "gmod_wire_value", chip() )
+				if ent:wirelink() then
+					NAB.UID = ent:wirelink()[ "1" ]
+					print( "Found UID chip: " .. NAB.UID )
+				else
+					error( "Failed to find UID chip" )
+				end
+			end
+			net.send( "[sv:nn] preinit", { UID = NAB.UID }, owner() )
+			net.sync( "[sh:nn] init", NAB.init )
+		end )
+	end )
+end
+
+function NAB.init()
+	local includes = {}
+	
+	include( includes, function()
+		local chipEnt = NAB.Entity( "chip", chip(), nil )
+		
+		net.receive( "[cl:nn] providerjson", function( name, data, ply )
+			NAB.providers = data
+			
+			local inc = {}
+			for k, v in pairs( NAB.providers ) do
+				table.insert( inc, NAB.data .. "providers/" .. v .. "/lua/server/provider.lua.txt" )
+			end
+			
+			local included = 0
+			local function callback( data )
+				for k, v in pairs( data ) do
+					NAB.Provider[ NAB.providers[ k ] ] = v
+				end
+				net.send( "[sv:nn] vehiclejson", nil, ply )
+			end
+			
+			include( inc, callback )
+		end )
+		
+		net.receive( "[cl:nn] vehiclejson", function( name, data, ply )
+			NAB.vehicle = data
+			
+			local function createFromTable( entData, parent )
+				for k, v in pairs( entData ) do
+					local ent = find.find( Vector( v.pos[ 1 ], v.pos[ 2 ], v.pos[ 3 ] ), v.model, v.class, parent.ent )
+					
+					local newEnt = NAB.Entity( k, ent, parent )
+					parent.children[ k ] = newEnt
+					net.send( "[sv:nn] addentity", { name = k, ent = ent, parent = parent:__tostring() }, ply )
+					
+					print( "Created " .. newEnt:__tostring() )
+					
+					--Create Providers
+					for _k, _v in pairs( v.providers ) do
+						local providerClass = NAB.Provider[ _v.type ]
+						if providerClass then
+							local provider = providerClass( _k, _v.sv or {} )
+							newEnt:addProvider( provider )
+							net.send( "[sv:nn] addprovider", { ent = newEnt:__tostring(), name = _k, data = _v }, ply )
+							
+							--print( "\tAdded '" .. provider.type .. "' provider" )
+						else
+							print( "\tFailed to add '" .. _v.type .. "' provider" )
+						end
+					end
+					
+					--Create child entities
+					createFromTable( v.children, newEnt )
+				end
+			end
+			
+			createFromTable( NAB.vehicle, NAB.Entity.entities[ "chip" ] )
+		end )
+	end )
+end
+
+NAB.preInit()

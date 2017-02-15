@@ -1,0 +1,55 @@
+NAB.Entity = Object:extend()
+
+NAB.Entity.entities = {}
+
+function NAB.Entity:__tostring()
+    return ( self.parent and self.parent:__tostring() .. "." or "" ) .. self.name
+end
+
+function NAB.Entity:new( name, ent, parent )
+    self.name = name
+    self.ent = ent
+
+    self.parent = parent or false
+    self.providers = {}
+    self.children = {}
+
+    NAB.Entity.entities[ self:__tostring() ] = self
+end
+
+function NAB.Entity:toSaveTable()
+    local tab = {}
+
+    if self.parent then
+        tab.pos = self.parent.ent:worldToLocal( self.ent:getPos() )
+        tab.model = self.ent:getModel()
+        tab.class = self.ent:getClass()
+    end
+
+    tab.providers = {}
+    for k, v in pairs( self.providers ) do
+        tab.providers[ v.name ] = {}
+        tab.providers[ v.name ].sv = v:toSaveTable()
+        tab.providers[ v.name ].type = v.type
+    end
+
+    tab.children = {}
+    for k, v in pairs( self.children ) do
+        tab.children[ k ] = v:toSaveTable()
+    end
+
+    return tab
+end
+
+function NAB.Entity:addProvider( provider )
+    self.providers[ provider.name ] = provider
+    self.providers[ provider.name ]:init( self.ent )
+end
+
+function NAB.Entity:removeProvider( name )
+    local provider = self.providers[ name ]
+    if provider then
+        provider:deinit()
+        self.providers[ name ] = nil
+    end
+end

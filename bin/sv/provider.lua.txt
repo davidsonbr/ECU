@@ -1,0 +1,38 @@
+NAB.Provider = {}
+NAB.Provider.base = Object:extend()
+
+function NAB.Provider.base:__tostring()
+    return "ECU Provider: " .. self.type
+end
+
+NAB.Provider.base.type = "base"
+
+NAB.Provider.base.hook = {}
+
+function NAB.Provider.base:new( name, data )
+    self.name = name
+end
+
+function NAB.Provider.base:toSaveTable()
+    local tab = {
+        type = self.type
+    }
+
+    return tab
+end
+
+function NAB.Provider.base:init( ent )
+    self.ent = ent
+    for k, v in pairs( self.hook ) do
+        hook.add( k, "[nab_hook]" .. self.type .. self.name .. self.ent:entIndex(), function( ... )
+            v( self, unpack( { ... } ) )
+        end )
+    end
+end
+
+function NAB.Provider.base:deinit()
+    self.ent = nil
+    for k, v in pairs( self.hook ) do
+        hook.remove( k, "[nab_hook]" .. self.type .. self.name .. self.ent:entIndex() )
+    end
+end

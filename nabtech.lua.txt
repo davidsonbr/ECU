@@ -34,5 +34,5 @@ elseif SERVER then
 end
 
 if CLIENT and player() == owner() or SERVER then
-	net.sync( "load", nil, init )
+	net.sync( "[sh:nn] load", init )
 end
