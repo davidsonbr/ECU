@@ -9,6 +9,7 @@ function P:new( name, data )
     self.engine = data.engine or ( self.chassis .. ".Engine" )
 
     self.automatic = data.automatic or false
+    self.shifting = false
 end
 
 function P:toSaveTable()
@@ -43,8 +44,8 @@ P.hook = {
         else
             self.ent:acfClutch( 0 )
         end
-
-        if self.automatic then
+		
+		if self.automatic then
             if engine.ent:acfRPM() >=  engine.ent:acfPowerbandMax() then
                 self.ent:acfShiftUp()
             elseif engine.ent:acfRPM() <= engine.ent:acfPowerbandMin() and self.ent:acfGear() > 1 then
@@ -53,12 +54,16 @@ P.hook = {
             return
         end
 
-        if self.wl.MOUSE1 == 1 and self.wl.MOUSE2 == 0 then
+        if not self.shifting and self.wl.Mouse1 == 1 and self.wl.Mouse2 == 0 then
+			self.shifting = true
             self.ent:acfShiftUp()
-        elseif self.wl.MOUSE1 == 0 and self.wl.MOUSE2 == 1 then
-            self.ent:acfShiftDown()
-        end
-    end
+        elseif not self.shifting and self.wl.Mouse1 == 0 and self.wl.Mouse2 == 1 then
+			self.shifting = true
+			self.ent:acfShiftDown()
+        elseif self.wl.Mouse1 == 0 and self.wl.Mouse2 == 0 then
+			self.shifting = false
+		end
+	end
 }
 
 return P
