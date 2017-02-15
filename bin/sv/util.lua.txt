@@ -57,6 +57,8 @@ NAB.Chat.add( "loadProvider", "load provider", function( name )
     end )
 end )
 
+--!ecu cfg entity provider.sv.setting type value
+--!ecu cfg chip.Chassis.Gearbox gearbox.sv.automatic boolean false
 NAB.Chat.add( "cfg", "set config", function( ent, key, type, value )
     local provider, locale, var = key:match( "^([^%.]+)%.([^%.]+)%.(.+)" )
 
