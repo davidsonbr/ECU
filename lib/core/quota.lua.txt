@@ -1,7 +1,0 @@
-function quotaPercent()
-    return 100 * ( quotaUsed() / quotaMax() )
-end
-
-function quotaSafe()
-    return 100 - quotaPercent() > 10
-end

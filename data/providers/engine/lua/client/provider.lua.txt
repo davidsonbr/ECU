@@ -1,3 +1,0 @@
-local P = NAB.Provider.base:extend()
-
-return P
