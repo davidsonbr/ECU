@@ -1,0 +1,6 @@
+---
+-- @author wetnab
+
+local ui = Object:extend()
+
+NAB.Interface = ui()
