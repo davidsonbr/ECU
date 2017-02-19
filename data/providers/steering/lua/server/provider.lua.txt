@@ -57,7 +57,7 @@ P.hook = {
             local driver = driverseat.ent:getDriver()
             if driver:isValid() then
                 if controller then
-                    controller = controller.ent:wirelink()
+                    controller = controller.ent:getWirelink()
                     if controller.A == 1 and controller.D == 0 then
                         self.turn = -1
                     elseif controller.A == 0 and controller.D == 1 then
@@ -73,12 +73,12 @@ P.hook = {
             local increment = self.turn * self.increment
 
             self.percent = math.clamp( self.percent + increment, -100, 100 )
-            self.offset = lerp( math.abs( self.percent ) / 100, 0, self.max * self.mul * ( self.percent / math.abs( self.percent ~= 0 and self.percent or 1 ) ) )
+            self.offset = math.lerp( math.abs( self.percent ) / 100, 0, self.max * self.mul * ( self.percent / math.abs( self.percent ~= 0 and self.percent or 1 ) ) )
         elseif self.percent ~= 0 then
             local increment = self.increment * ( self.percent / -math.abs( self.percent ) )
 
             self.percent = math.clamp( self.percent + increment, -100, 100 )
-            self.offset = lerp( math.abs( self.percent ) / 100, 0, self.max * self.mul * ( self.percent / math.abs( self.percent ~= 0 and self.percent or 1 ) ) )
+            self.offset = math.lerp( math.abs( self.percent ) / 100, 0, self.max * self.mul * ( self.percent / math.abs( self.percent ~= 0 and self.percent or 1 ) ) )
         else
             self.offset = 0
         end

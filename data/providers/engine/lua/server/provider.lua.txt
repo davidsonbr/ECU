@@ -52,7 +52,7 @@ P.hook = {
             self.ent:acfSetActive( true )
 
             if not self.wl then
-                self.wl = controller.ent:wirelink()
+                self.wl = controller.ent:getWirelink()
             end
 
             if self.wl.W == 1 and self.wl.S == 0 then

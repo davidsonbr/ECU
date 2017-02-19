@@ -23,7 +23,7 @@ end
 P.hook = {
     think = function( self )
         if not self.wl then
-            self.wl = self.ent:wirelink()
+            self.wl = self.ent:getWirelink()
         end
         self.wl.Constant = self.constant
         self.wl.Damping = self.damping

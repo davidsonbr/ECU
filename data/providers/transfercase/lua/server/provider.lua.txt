@@ -30,7 +30,7 @@ P.hook = {
         local driver = driverseat.ent:getDriver()
         if not driver:isValid() then return end
 
-        controller = controller.ent:wirelink()
+        controller = controller.ent:getWirelink()
         if controller.W == 1 and controller.S == 0 then
             self.ent:acfShift( 1 )
         elseif controller.W == 0 and controller.S == 1 then
