@@ -1,0 +1,17 @@
+---
+-- @author wetnab
+
+net.receive( "[cl:nn] getuidata", function( name, data, ply )
+	local ent = NAB.Entity.entities[ data.ent ]
+	local provider = ent.providers[ data.provider ]
+	
+	net.send( "[sv:nn] getuidata", { ent = data.ent, provider = data.provider, data = provider:toSaveTable() }, owner() )
+end )
+	
+net.receive( "[cl:nn] updateprovider", function( name, data, ply )
+	local ent = NAB.Entity.entities[ data.ent ]
+	local provider = ent.providers[ data.provider ]
+	
+	provider[ data.key ] = data.value
+end )
+

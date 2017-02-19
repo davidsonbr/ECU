@@ -1,5 +1,5 @@
-net.receive( "[sv:nn] nnsave", function( name, data, ply )
-    local clientData = chipEnt:toSaveTable()
+net.receive( "[sv:nn] save", function( name, data, ply )
+    local clientData = NAB.Entity.entities[ "chip" ]:toSaveTable()
     local tmp = {}
 
     local function moveTable( client, server )
@@ -20,6 +20,7 @@ net.receive( "[sv:nn] nnsave", function( name, data, ply )
     end
 
     print( "SAVING..." )
+    if not file.exists( NAB.data .. "vehicles/" .. NAB.UID ) then file.createDir( NAB.data .. "vehicles/" .. NAB.UID ) end
     file.write( NAB.data .. "vehicles/" .. NAB.UID .. "/vehicle.json.txt", json.encode( data.children ) )
     file.write( NAB.data .. "vehicles/" .. NAB.UID .. "/providers.json.txt", json.encode( providers ) )
 end )

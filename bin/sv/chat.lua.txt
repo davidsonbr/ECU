@@ -34,7 +34,7 @@ hook.add( "PlayerSay", "nabChatCommands", function ( ply, msg )
             end
 
             if cmds[ cmd ] then
-                hook.run( "nabChat_" .. cmd, unpack( args ) )
+                hook.run( "nabChat_" .. cmd, unpack( args or {} ) )
             else
                 --return "Hey everybody, I just tried to use a command that does not exist!"
             end

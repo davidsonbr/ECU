@@ -3,6 +3,11 @@ NAB.Chat.add( "save", "save files", function()
     net.send( "[sv:nn] save", data, owner() )
 end )
 
+net.receive( "[cl:nn] save", function( name, data, ply )
+	local data = NAB.Entity.entities[ "chip" ]:toSaveTable()
+	net.send( "[sv:nn] save", data, owner() )
+end )
+
 NAB.Chat.add( "create", "create entity", function( name, parent )
     local trace = owner():getEyeTrace()
     local ent = trace.Entity

@@ -24,6 +24,7 @@ function NAB.Entity:toSaveTable()
     for k, v in pairs( self.providers ) do
         tab.providers[ v.name ] = {}
         tab.providers[ v.name ].cl = v:toSaveTable()
+		tab.providers[ v.name ].cl.types = v.types
     end
 
     tab.children = {}

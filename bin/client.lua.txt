@@ -24,7 +24,9 @@ function NAB.preInit( _, data )
 end
 
 function NAB.init()
-	local includes = {}
+	local includes = {
+		NAB.bin .. "cl/interface.lua.txt",
+	}
 	
 	include( includes, function()
 		local chipEnt = NAB.Entity( "chip", chip(), nil )
@@ -66,6 +68,8 @@ function NAB.init()
 			
 			local ent = NAB.Entity.entities[ entName ]
 			local provider = NAB.Provider[ providerData.type ]( providerName, providerData.cl or {} )
+			provider.type = providerData.type
+			
 			ent:addProvider( provider )
 		end )
 	end )

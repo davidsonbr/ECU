@@ -14,14 +14,15 @@ function NAB.preInit()
 		NAB.bin .. "sv/provider.lua.txt",
 		NAB.bin .. "sv/chat.lua.txt",
 		NAB.bin .. "sv/util.lua.txt",
+		NAB.bin .. "sv/interface.lua.txt",
 	}
 
 	loadlib( libs, function()
 		include( includes, function()
 			if not NAB.UID then
 				local ent = find.find( Vector( -20.626, 0.031, -2.703 ), "models/cheeze/wires/mini_cpu.mdl", "gmod_wire_value", chip() )
-				if ent:wirelink() then
-					NAB.UID = ent:wirelink()[ "1" ]
+				if ent:getWirelink() then
+					NAB.UID = ent:getWirelink()[ "1" ]
 					print( "Found UID chip: " .. NAB.UID )
 				else
 					error( "Failed to find UID chip" )
@@ -76,7 +77,9 @@ function NAB.init()
 						local providerClass = NAB.Provider[ _v.type ]
 						if providerClass then
 							local provider = providerClass( _k, _v.sv or {} )
+							provider.type = _v.type
 							newEnt:addProvider( provider )
+							
 							net.send( "[sv:nn] addprovider", { ent = newEnt:__tostring(), name = _k, data = _v }, ply )
 							
 							--print( "\tAdded '" .. provider.type .. "' provider" )

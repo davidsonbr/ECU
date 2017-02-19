@@ -2,5 +2,263 @@
 -- @author wetnab
 
 local ui = Object:extend()
+local config_element = Object:extend()
+
+function ui:new()
+	if render.isHUDActive() then
+		self:init()
+	else
+		hook.add( "hudconnected", "init nabtech ui", function()
+			hook.remove( "hudconnected", "init nabtech ui" )
+			self:init()
+		end )
+	end
+	
+	net.receive( "[sv:nn] getuidata", function( name, data, ply )
+		local sv = self.editor.config.providers[ data.provider ].sv
+		for k, v in pairs( data.data ) do
+			local element = config_element( k, type( v ), v, function( val )
+				net.send( "[cl:nn] updateprovider", { ent = tostring( data.ent ), provider = data.provider, key = k, value = val } )
+			end )
+			element:setParent( sv )
+			element:dock( 4 )
+		end
+	end )
+end
+
+function ui:init()
+	self.root = vgui.create( "DFrame" )
+	self.root:setSize( 800, 600 )
+	self.root:center()
+	self.root:setDeleteOnClose( false )
+	self.root:setTitle( "NabTech Elite Configuration" )
+	self.root:dockPadding( 5, 28, 5, 5 )
+	
+	self:refresh()
+	
+	self.preview = vgui.create( "DPanel", self.root )
+	self.preview.model = vgui.create( "DModelPanel", self.preview )
+	
+	self.editor = vgui.create( "DPanel", self.root )
+	self.editor.config = vgui.create( "DScrollPanel", self.editor )
+	self.editor.config:setPos( 2, 28 )
+	self.editor.config:setSize( 596, 538 )
+	
+	self.b_add = vgui.create( "DButton", self.editor )
+	self.b_delete = vgui.create( "DButton", self.editor )
+	self.b_save = vgui.create( "DButton", self.editor )
+	self.b_refresh = vgui.create( "DButton", self.editor )
+	
+	self.preview:setPos( 5, 408 )
+	self.preview:setSize( 187, 187 )
+	self.preview.model:setSize( 186, 186 )
+	
+	self.editor:setPos( 195, 27 )
+	self.editor:setSize( 600, 568 )
+	
+	self.b_add:setPos( 2, 2 )
+	self.b_add:setImage( "icon16/add.png" )
+	self.b_add:setText( "" )
+	self.b_add:setSize( 24, 24 )
+	function self.b_add.doClick()
+		self:add()
+	end
+	
+	self.b_delete:setPos( 28, 2 )
+	self.b_delete:setImage( "icon16/delete.png" )
+	self.b_delete:setText( "" )
+	self.b_delete:setSize( 24, 24 )
+	function self.b_delete.doClick()
+		self:delete()
+	end
+	
+	self.b_save:setPos( 54, 2 )
+	self.b_save:setImage( "icon16/disk.png" )
+	self.b_save:setText( "" )
+	self.b_save:setSize( 24, 24 )
+	function self.b_save.doClick()
+		self:save()
+	end
+	
+	self.b_refresh:setPos( 80, 2 )
+	self.b_refresh:setImage( "icon16/arrow_refresh.png" )
+	self.b_refresh:setText( "" )
+	self.b_refresh:setSize( 24, 24 )
+	function self.b_refresh.doClick()
+		self:refresh()
+	end
+	
+	self.root:hide()
+	hook.add( "inputPressed", "[cl:nh] showhud", function( key )
+		if key == KEY[ "/" ] then
+			self:enable()
+		end
+	end )
+	
+	hook.add( "huddisconnect", "minimize nabtech ui", function()
+		self:disable()
+	end )
+end
+
+function ui:enable()
+	self.root:show()
+	self.root:makePopup()
+end
+
+function ui:disable()
+	self.root:hide()
+end
+
+function ui:select( node )
+	local ent = self.ents[ node ]
+	self.preview.model:setModel( ent.ent:getModel() )
+	
+	if self.editor.config then
+		self.editor.config:remove()
+		for k, v in pairs( self.editor.config.providers or {} ) do
+			v:remove()
+		end
+	end
+
+	local config = vgui.create( "DScrollPanel", self.editor )
+	config.providers = {}
+	config:setPos( 2, 28 )
+	config:setSize( 596, 538 )
+
+	for name, provider in pairs( ent.providers ) do
+		local data = vgui.create( "DCollapsibleCategory", config )
+	
+		data:setLabel( provider.name .. ":" .. name )
+		data:dockMargin( 5, 5, 5, 5 )
+		data:dock( 4 )
+		
+		data.cl = vgui.create( "DCollapsibleCategory", data )
+		data.cl:setLabel( "Client" )
+		data.cl:dockMargin( 5, 5, 5, 5 )
+		data.cl:dock( 4 )
+	
+		data.sv = vgui.create( "DCollapsibleCategory", data )
+		data.sv:setLabel( "Server" )
+		data.sv:dockMargin( 5, 5, 5, 5 )
+		data.sv:dock( 4 )
+		
+		for k, v in pairs( provider:toSaveTable() ) do
+			local element = config_element( k, type( v ), v, function( val )
+				provider[ k ] = val
+			end )
+			element:setParent( data.cl )
+			element:dock( 4 )
+		end
+		
+		net.send( "[cl:nn] getuidata", { ent = tostring( ent ), provider = name } )
+	
+		config.providers[ name ] = data
+	end
+		
+	self.editor.config = config
+end
+
+function ui:populateTree( ent, node )
+	if not ent then return end
+	
+	node = node:addNode( ent.name )
+	self.ents[ node ] = ent
+	for _, e in pairs( ent.children ) do
+		self:populateTree( e, node )
+	end
+end
+
+function ui:add()
+	print( "add" )
+end
+
+function ui:delete()
+	print( "delete" )
+end
+
+function ui:save()
+	net.send( "[cl:nn] save", {} )
+end
+
+function ui:refresh()
+	if self.browser then self.browser:remove() end
+	
+	self.browser = vgui.create( "DTree", self.root )
+	self.ents = {}
+	self.browser:setPos( 4, 26 )
+	self.browser:setSize( 189, 380 )
+	function self.browser.onNodeSelected( _, node )
+		self:select( node )
+	end
+	self:populateTree( NAB.Entity.entities.chip, self.browser )
+end
+
+local types = {
+	string = function( value )
+		return value
+	end,
+	number = function( value )
+		return tonumber( value )
+	end,
+	boolean = function( value )
+		return value == "true"
+	end,
+	vector = function( value )
+		local x, y, z = value:match( "(%d+%.?%d*)[, ](%d+%.?%d*)[, ](%d+%.?%d*)" )
+		return Vector( x, y, z )
+	end,
+	angle = function( value )
+		local p, y, r = value:match( "(%d+%.?%d*)[, ](%d+%.?%d*)[, ](%d+%.?%d*)" )
+		return Angle( p, y, r )
+	end,
+	color = function( value )
+		local r, g, b, a = value:match( "(%d+)[, ](%d+)[, ](%d+)[, ](%d+)?" )
+		return Color( r, g, b, a )
+	end
+}
+
+function config_element:new( name, _type, value, callback )
+	self.name = name
+	
+	self.root = vgui.create( "DPanel" )
+	self.root:dockPadding( 5, 2, 5, 2 )
+	
+	self.label = vgui.create( "DLabel", self.root )
+	self.label:setText( self.name )
+	self.label:setTextColor( Color( 0, 0, 0 ) )
+	self.label:dock( 2 )
+	
+	local function update( _ )
+		local val = types[ self.type:getSelected():lower() ]( self.data:getValue() )
+		if callback then
+			callback( val )
+		end
+	end
+	
+	self.type = vgui.create( "DComboBox", self.root )
+	for k, v in pairs( types ) do
+		self.type:addChoice( k, k == _type:lower() )
+	end
+	self.type:dock( 3 )
+	function self.type.onSelect( _, i, v, d )
+		update()
+	end
+	
+	self.data = vgui.create( "DTextEntry", self.root )
+	self.data:setSize( 350, 25 )
+	self.data:dock( 3 )
+	self.data:setText( tostring( value ) )
+	function self.data.onEnter( _ )
+		update()
+	end
+end
+
+function config_element:setParent( panel )
+	self.root:setParent( panel )
+end
+
+function config_element:dock( d )
+	self.root:dock( d )
+end
 
 NAB.Interface = ui()
